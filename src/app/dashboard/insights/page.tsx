@@ -1,12 +1,12 @@
-// Overview dashboard — will be fully built in Step 6
-export default function DashboardPage() {
+// AI insights history — will be fully built in Step 11
+export default function InsightsPage() {
   return (
     <div>
       <h1 className="text-2xl font-semibold text-zinc-50 tracking-tight">
-        Overview
+        Insights
       </h1>
       <p className="text-zinc-400 mt-1 text-sm">
-        Your fitness intelligence hub. Coming in step 6.
+        Your AI coaching history. Coming in step 11.
       </p>
     </div>
   );
