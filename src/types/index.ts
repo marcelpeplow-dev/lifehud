@@ -255,3 +255,11 @@ export interface WorkoutChartDataPoint {
   workouts: number;
   duration_minutes: number;
 }
+
+export interface SleepStagesDataPoint {
+  date: string;
+  deep_minutes: number;
+  rem_minutes: number;
+  light_minutes: number;
+  awake_minutes: number;
+}
