@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+/* Class-based dark mode for Tailwind 4 */
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Typography */
+  --font-sans: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+
+  /* Brand accent */
+  --color-brand: var(--color-emerald-500);
+
+  /* Semantic surface colors (dark theme defaults) */
+  --color-background: var(--color-zinc-950);
+  --color-surface: var(--color-zinc-900);
+  --color-border: var(--color-zinc-800);
+  --color-text-primary: var(--color-zinc-50);
+  --color-text-secondary: var(--color-zinc-400);
+
+  /* Category colors */
+  --color-category-sleep: var(--color-blue-500);
+  --color-category-fitness: var(--color-orange-500);
+  --color-category-recovery: var(--color-green-500);
+  --color-category-correlation: var(--color-purple-500);
+  --color-category-goal: var(--color-amber-500);
+}
+
+/* Base styles */
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: theme(--color-zinc-950);
+  color: theme(--color-zinc-50);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Tabular numbers for metric displays */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
