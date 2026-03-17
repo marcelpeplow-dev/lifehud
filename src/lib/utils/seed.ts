@@ -328,6 +328,46 @@ function generateInsights(userId: string): InsightInsert[] {
   ];
 }
 
+// ─── SEED GOALS ──────────────────────────────────────────────────────────────
+
+function generateGoals(userId: string) {
+  return [
+    {
+      user_id: userId,
+      title: "Sleep 7+ hours per night",
+      category: "sleep",
+      metric_name: "sleep_duration",
+      target_value: 420,
+      target_unit: "minutes",
+      target_frequency: "daily",
+      current_value: 0,
+      is_active: true,
+    },
+    {
+      user_id: userId,
+      title: "Work out 4x per week",
+      category: "fitness",
+      metric_name: "weekly_workouts",
+      target_value: 4,
+      target_unit: "workouts",
+      target_frequency: "weekly",
+      current_value: 0,
+      is_active: true,
+    },
+    {
+      user_id: userId,
+      title: "Walk 10,000 steps daily",
+      category: "fitness",
+      metric_name: "steps",
+      target_value: 10000,
+      target_unit: "steps",
+      target_frequency: "daily",
+      current_value: 0,
+      is_active: true,
+    },
+  ];
+}
+
 // ─── MAIN SEED FUNCTION ───────────────────────────────────────────────────────
 
 export async function seedUserData(
@@ -338,12 +378,14 @@ export async function seedUserData(
   workouts: number;
   metrics: number;
   insights: number;
+  goals: number;
 }> {
   // Clear existing seed data for this user to make it re-runnable
   await Promise.all([
     supabase.from("sleep_records").delete().eq("user_id", userId).eq("source", "seed"),
     supabase.from("workouts").delete().eq("user_id", userId).eq("source", "seed"),
     supabase.from("daily_metrics").delete().eq("user_id", userId).eq("source", "seed"),
+    supabase.from("goals").delete().eq("user_id", userId),
     supabase
       .from("insights")
       .delete()
@@ -353,28 +395,31 @@ export async function seedUserData(
 
   const sleepRecords = generateSleepRecords(userId);
   const workoutRecords = generateWorkouts(userId);
-
   const workoutDateSet = new Set(workoutRecords.map((w) => w.date as string));
   const metricRecords = generateDailyMetrics(userId, workoutDateSet);
   const insightRecords = generateInsights(userId);
+  const goalRecords = generateGoals(userId);
 
-  const [sleepResult, workoutResult, metricsResult, insightsResult] =
+  const [sleepResult, workoutResult, metricsResult, insightsResult, goalsResult] =
     await Promise.all([
       supabase.from("sleep_records").insert(sleepRecords),
       supabase.from("workouts").insert(workoutRecords),
       supabase.from("daily_metrics").insert(metricRecords),
       supabase.from("insights").insert(insightRecords),
+      supabase.from("goals").insert(goalRecords),
     ]);
 
   if (sleepResult.error) throw new Error(`Sleep insert: ${sleepResult.error.message}`);
   if (workoutResult.error) throw new Error(`Workout insert: ${workoutResult.error.message}`);
   if (metricsResult.error) throw new Error(`Metrics insert: ${metricsResult.error.message}`);
   if (insightsResult.error) throw new Error(`Insights insert: ${insightsResult.error.message}`);
+  if (goalsResult.error) throw new Error(`Goals insert: ${goalsResult.error.message}`);
 
   return {
     sleep: sleepRecords.length,
     workouts: workoutRecords.length,
     metrics: metricRecords.length,
     insights: insightRecords.length,
+    goals: goalRecords.length,
   };
 }
