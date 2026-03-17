@@ -10,11 +10,13 @@ import {
   ResponsiveContainer,
   Cell,
 } from "recharts";
-import { formatChartLabel } from "@/lib/utils/dates";
+import { formatChartLabel, formatShortDate } from "@/lib/utils/dates";
 import type { WorkoutChartDataPoint } from "@/types/index";
 
 interface ActivityChartProps {
   data: WorkoutChartDataPoint[];
+  showShortDate?: boolean;
+  height?: number;
 }
 
 interface TooltipPayload {
@@ -40,15 +42,17 @@ function CustomTooltip({
   );
 }
 
-export function ActivityChart({ data }: ActivityChartProps) {
+export function ActivityChart({ data, showShortDate = false, height = 180 }: ActivityChartProps) {
   const chartData = data.map((d) => ({
-    date: formatChartLabel(d.date),
+    date: showShortDate ? formatShortDate(d.date) : formatChartLabel(d.date),
     minutes: d.duration_minutes,
     hasWorkout: d.workouts > 0,
   }));
 
+  const tickInterval = data.length > 14 ? Math.floor(data.length / 10) : 0;
+
   return (
-    <ResponsiveContainer width="100%" height={180}>
+    <ResponsiveContainer width="100%" height={height}>
       <BarChart data={chartData} barCategoryGap="30%">
         <CartesianGrid vertical={false} stroke="#27272a" />
         <XAxis
@@ -56,6 +60,7 @@ export function ActivityChart({ data }: ActivityChartProps) {
           tick={{ fill: "#71717a", fontSize: 11 }}
           axisLine={false}
           tickLine={false}
+          interval={tickInterval}
         />
         <YAxis
           tickFormatter={(v: number) => `${v}m`}
