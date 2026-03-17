@@ -1,0 +1,100 @@
+import { NextResponse } from "next/server";
+import { format, subDays } from "date-fns";
+import { createClient } from "@/lib/supabase/server";
+import { detectPatterns } from "@/lib/analysis/patterns";
+import { generateInsights } from "@/lib/ai/generate";
+import { average } from "@/lib/utils/metrics";
+import type { SleepRecord, Workout, DailyMetrics, InsightCategory } from "@/types/index";
+
+export async function POST() {
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const today = new Date();
+    const todayStr = format(today, "yyyy-MM-dd");
+    const thirtyDaysAgo = format(subDays(today, 30), "yyyy-MM-dd");
+
+    // Check for already-generated insights today (avoid duplicates)
+    const { data: existingToday } = await supabase
+      .from("insights")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("date", todayStr)
+      .limit(1);
+
+    if (existingToday && existingToday.length > 0) {
+      return NextResponse.json({ message: "Insights already generated today", generated: 0 });
+    }
+
+    // Fetch last 30 days of data
+    const [
+      { data: sleepData },
+      { data: workoutData },
+      { data: metricsData },
+    ] = await Promise.all([
+      supabase
+        .from("sleep_records")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("date", thirtyDaysAgo)
+        .order("date", { ascending: true }),
+      supabase
+        .from("workouts")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("date", thirtyDaysAgo)
+        .order("date", { ascending: true }),
+      supabase
+        .from("daily_metrics")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("date", thirtyDaysAgo)
+        .order("date", { ascending: true }),
+    ]);
+
+    const sleepRecords = (sleepData ?? []) as SleepRecord[];
+    const workouts = (workoutData ?? []) as Workout[];
+    const dailyMetrics = (metricsData ?? []) as DailyMetrics[];
+
+    // Detect patterns
+    const patterns = detectPatterns({ sleepRecords, workouts, dailyMetrics, today });
+
+    if (patterns.length === 0) {
+      return NextResponse.json({ message: "Not enough data for pattern detection", generated: 0 });
+    }
+
+    // Build context summary for Claude
+    const avgSleepMinutes = average(sleepRecords.map((s) => s.duration_minutes));
+    const context = {
+      nightCount: sleepRecords.length,
+      workoutCount: workouts.length,
+      avgSleepHours: avgSleepMinutes != null ? avgSleepMinutes / 60 : null,
+    };
+
+    // Generate insights via Claude
+    const rawInsights = await generateInsights(patterns, context);
+
+    // Insert into DB
+    const rows = rawInsights.map((insight) => ({
+      user_id: user.id,
+      date: todayStr,
+      category: insight.category as InsightCategory,
+      title: insight.title,
+      body: insight.body,
+      priority: insight.priority,
+      data_points: { patterns_used: patterns.slice(0, 3).map((p) => p.type) },
+      is_read: false,
+      is_dismissed: false,
+    }));
+
+    const { data: inserted, error } = await supabase.from("insights").insert(rows).select();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    return NextResponse.json({ generated: inserted?.length ?? 0, insights: inserted });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
