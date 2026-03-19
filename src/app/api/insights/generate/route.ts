@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { detectPatterns } from "@/lib/analysis/patterns";
 import { generateInsights } from "@/lib/ai/generate";
 import { average } from "@/lib/utils/metrics";
-import type { SleepRecord, Workout, DailyMetrics, InsightCategory } from "@/types/index";
+import type { SleepRecord, Workout, DailyMetrics, CheckIn, InsightCategory } from "@/types/index";
 
 export async function POST() {
   try {
@@ -33,6 +33,7 @@ export async function POST() {
       { data: sleepData },
       { data: workoutData },
       { data: metricsData },
+      { data: checkInData },
     ] = await Promise.all([
       supabase
         .from("sleep_records")
@@ -52,14 +53,21 @@ export async function POST() {
         .eq("user_id", user.id)
         .gte("date", thirtyDaysAgo)
         .order("date", { ascending: true }),
+      supabase
+        .from("daily_checkins")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("date", thirtyDaysAgo)
+        .order("date", { ascending: true }),
     ]);
 
     const sleepRecords = (sleepData ?? []) as SleepRecord[];
     const workouts = (workoutData ?? []) as Workout[];
     const dailyMetrics = (metricsData ?? []) as DailyMetrics[];
+    const checkIns = (checkInData ?? []) as CheckIn[];
 
     // Detect patterns
-    const patterns = detectPatterns({ sleepRecords, workouts, dailyMetrics, today });
+    const patterns = detectPatterns({ sleepRecords, workouts, dailyMetrics, checkIns, today });
 
     if (patterns.length === 0) {
       return NextResponse.json({ message: "Not enough data for pattern detection", generated: 0 });
@@ -67,10 +75,17 @@ export async function POST() {
 
     // Build context summary for Claude
     const avgSleepMinutes = average(sleepRecords.map((s) => s.duration_minutes));
+    const avgMood = checkIns.length > 0 ? average(checkIns.map((c) => c.mood)) : null;
+    const avgEnergy = checkIns.length > 0 ? average(checkIns.map((c) => c.energy)) : null;
+    const avgStress = checkIns.length > 0 ? average(checkIns.map((c) => c.stress)) : null;
     const context = {
       nightCount: sleepRecords.length,
       workoutCount: workouts.length,
       avgSleepHours: avgSleepMinutes != null ? avgSleepMinutes / 60 : null,
+      checkInCount: checkIns.length,
+      avgMood,
+      avgEnergy,
+      avgStress,
     };
 
     // Generate insights via Claude

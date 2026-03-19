@@ -30,6 +30,14 @@ type InsightInsert = Partial<Database["public"]["Tables"]["insights"]["Insert"]>
   title: string;
   body: string;
 };
+type CheckInInsert = {
+  user_id: string;
+  date: string;
+  mood: number;
+  energy: number;
+  stress: number;
+  notes?: string | null;
+};
 
 // Simple seeded random to make data look natural but still vary each run
 function rand(min: number, max: number) {
@@ -260,6 +268,64 @@ function generateDailyMetrics(
   return metrics;
 }
 
+// ─── CHECK-INS ────────────────────────────────────────────────────────────────
+
+const SAMPLE_NOTES = [
+  "Feeling good after yesterday's workout.",
+  "Busy day at work, a bit mentally drained.",
+  "Slept really well last night, ready to go.",
+  "Skipped workout today, needed rest.",
+  "Productive morning, energy held up well.",
+  "Stressful meeting but managed okay.",
+  "Legs still sore from yesterday.",
+  "Great mood, got outside for a walk.",
+  "Tired but pushed through the afternoon.",
+  "Feeling balanced today.",
+];
+
+function generateCheckIns(
+  userId: string,
+  sleepByDate: Map<string, number>,
+  workoutDates: Set<string>
+): CheckInInsert[] {
+  const checkins: CheckInInsert[] = [];
+  const today = new Date();
+
+  for (let daysAgo = 30; daysAgo >= 0; daysAgo--) {
+    const date = subDays(today, daysAgo);
+    const dateStr = format(date, "yyyy-MM-dd");
+
+    const sleepMins = sleepByDate.get(dateStr) ?? 420;
+    const isWorkoutDay = workoutDates.has(dateStr);
+
+    // Mood: correlates loosely with sleep (>= 420min = good, < 360min = poor)
+    const sleepBonus = sleepMins >= 420 ? randInt(1, 2) : sleepMins < 360 ? -randInt(1, 2) : 0;
+    const baseMood = randInt(5, 8);
+    const mood = Math.min(10, Math.max(1, baseMood + sleepBonus));
+
+    // Energy: correlates with sleep and slightly lower on rest days
+    const baseEnergy = randInt(4, 8);
+    const energyBonus = sleepMins >= 420 ? 1 : sleepMins < 360 ? -1 : 0;
+    const workoutPenalty = isWorkoutDay && Math.random() < 0.3 ? -1 : 0; // post-workout tiredness
+    const energy = Math.min(10, Math.max(1, baseEnergy + energyBonus + workoutPenalty));
+
+    // Stress: slightly higher on weekdays, inversely related to sleep quality
+    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+    const baseStress = isWeekend ? randInt(2, 5) : randInt(3, 7);
+    const stressFromSleep = sleepMins < 360 ? 1 : 0;
+    const stress = Math.min(10, Math.max(1, baseStress + stressFromSleep));
+
+    const addNote = Math.random() < 0.3;
+    const notes = addNote
+      ? SAMPLE_NOTES[Math.floor(Math.random() * SAMPLE_NOTES.length)]
+      : null;
+
+    checkins.push({ user_id: userId, date: dateStr, mood, energy, stress, notes });
+  }
+
+  return checkins;
+}
+
 // ─── SAMPLE INSIGHTS ─────────────────────────────────────────────────────────
 
 function generateInsights(userId: string): InsightInsert[] {
@@ -379,6 +445,7 @@ export async function seedUserData(
   metrics: number;
   insights: number;
   goals: number;
+  checkins: number;
 }> {
   // Clear existing seed data for this user to make it re-runnable
   await Promise.all([
@@ -390,7 +457,8 @@ export async function seedUserData(
       .from("insights")
       .delete()
       .eq("user_id", userId)
-      .in("category", ["sleep", "fitness", "recovery", "correlation", "general"]),
+      .in("category", ["sleep", "fitness", "recovery", "correlation", "general", "wellbeing"]),
+    supabase.from("daily_checkins").delete().eq("user_id", userId),
   ]);
 
   const sleepRecords = generateSleepRecords(userId);
@@ -399,14 +467,17 @@ export async function seedUserData(
   const metricRecords = generateDailyMetrics(userId, workoutDateSet);
   const insightRecords = generateInsights(userId);
   const goalRecords = generateGoals(userId);
+  const sleepByDate = new Map(sleepRecords.map((s) => [s.date as string, s.duration_minutes as number]));
+  const checkInRecords = generateCheckIns(userId, sleepByDate, workoutDateSet);
 
-  const [sleepResult, workoutResult, metricsResult, insightsResult, goalsResult] =
+  const [sleepResult, workoutResult, metricsResult, insightsResult, goalsResult, checkInsResult] =
     await Promise.all([
       supabase.from("sleep_records").insert(sleepRecords),
       supabase.from("workouts").insert(workoutRecords),
       supabase.from("daily_metrics").insert(metricRecords),
       supabase.from("insights").insert(insightRecords),
       supabase.from("goals").insert(goalRecords),
+      supabase.from("daily_checkins").insert(checkInRecords),
     ]);
 
   if (sleepResult.error) throw new Error(`Sleep insert: ${sleepResult.error.message}`);
@@ -414,6 +485,7 @@ export async function seedUserData(
   if (metricsResult.error) throw new Error(`Metrics insert: ${metricsResult.error.message}`);
   if (insightsResult.error) throw new Error(`Insights insert: ${insightsResult.error.message}`);
   if (goalsResult.error) throw new Error(`Goals insert: ${goalsResult.error.message}`);
+  if (checkInsResult.error) throw new Error(`Check-ins insert: ${checkInsResult.error.message}`);
 
   return {
     sleep: sleepRecords.length,
@@ -421,5 +493,6 @@ export async function seedUserData(
     metrics: metricRecords.length,
     insights: insightRecords.length,
     goals: goalRecords.length,
+    checkins: checkInRecords.length,
   };
 }

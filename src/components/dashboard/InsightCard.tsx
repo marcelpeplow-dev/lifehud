@@ -14,6 +14,7 @@ const BORDER_COLORS: Record<Insight["category"], string> = {
   correlation: "border-purple-500",
   goal: "border-amber-500",
   general: "border-zinc-500",
+  wellbeing: "border-emerald-500",
 };
 
 interface InsightCardProps {

@@ -9,6 +9,7 @@ import {
   Dumbbell,
   Sparkles,
   Target,
+  SmilePlus,
   Settings,
   LogOut,
   Upload,
@@ -26,6 +27,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Overview", href: "/dashboard", icon: Home, exact: true },
   { label: "Sleep", href: "/dashboard/sleep", icon: Moon },
   { label: "Fitness", href: "/dashboard/fitness", icon: Dumbbell },
+  { label: "Check-ins", href: "/dashboard/checkins", icon: SmilePlus },
   { label: "Insights", href: "/dashboard/insights", icon: Sparkles },
   { label: "Goals", href: "/dashboard/goals", icon: Target },
 ];

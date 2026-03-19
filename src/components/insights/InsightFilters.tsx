@@ -8,6 +8,7 @@ const CATEGORIES: { label: string; value: InsightCategory | "all" }[] = [
   { label: "Sleep", value: "sleep" },
   { label: "Fitness", value: "fitness" },
   { label: "Recovery", value: "recovery" },
+  { label: "Wellbeing", value: "wellbeing" },
   { label: "Correlation", value: "correlation" },
   { label: "Goal", value: "goal" },
   { label: "General", value: "general" },

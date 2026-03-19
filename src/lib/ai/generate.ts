@@ -11,22 +11,34 @@ Rules:
 - Be encouraging, not alarmist
 - Focus on what the user can do differently
 - Each insight should be a distinct observation
-- Vary insight categories (sleep, fitness, recovery, correlation)
+- Vary insight categories (sleep, fitness, recovery, correlation, wellbeing)
 
 Respond ONLY with a valid JSON array. No markdown, no explanation outside the JSON.
-Schema: [{"category": "sleep|fitness|recovery|correlation|goal|general", "title": "short title (max 60 chars)", "body": "2-3 sentence insight (max 200 chars)", "priority": 1-5}]`;
+Schema: [{"category": "sleep|fitness|recovery|correlation|wellbeing|goal|general", "title": "short title (max 60 chars)", "body": "2-3 sentence insight (max 200 chars)", "priority": 1-5}]`;
 
 export async function generateInsights(
   patterns: DetectedPattern[],
-  context: { nightCount: number; workoutCount: number; avgSleepHours: number | null }
+  context: {
+    nightCount: number;
+    workoutCount: number;
+    avgSleepHours: number | null;
+    checkInCount: number;
+    avgMood: number | null;
+    avgEnergy: number | null;
+    avgStress: number | null;
+  }
 ): Promise<RawInsight[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
 
   const client = new Anthropic({ apiKey });
 
+  const wellbeingCtx = context.checkInCount > 0
+    ? `${context.checkInCount} check-ins recorded, avg mood ${context.avgMood != null ? context.avgMood.toFixed(1) : "?"}/10, avg energy ${context.avgEnergy != null ? context.avgEnergy.toFixed(1) : "?"}/10, avg stress ${context.avgStress != null ? context.avgStress.toFixed(1) : "?"}/10.`
+    : "No check-in data yet.";
+
   const userMessage = `
-User context: ${context.nightCount} nights tracked, ${context.workoutCount} workouts in last 30 days, avg sleep ${context.avgSleepHours != null ? context.avgSleepHours.toFixed(1) + "h" : "unknown"}.
+User context: ${context.nightCount} nights tracked, ${context.workoutCount} workouts in last 30 days, avg sleep ${context.avgSleepHours != null ? context.avgSleepHours.toFixed(1) + "h" : "unknown"}. ${wellbeingCtx}
 
 Detected patterns (${patterns.length}):
 ${patterns.map((p, i) => `${i + 1}. [${p.significance.toUpperCase()}] ${p.description}`).join("\n")}

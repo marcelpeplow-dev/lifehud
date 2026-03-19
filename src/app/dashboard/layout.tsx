@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { MobileNav } from "@/components/dashboard/MobileNav";
+import { CheckInFAB } from "@/components/checkin/CheckInFAB";
 
 export default function DashboardLayout({
   children,
@@ -20,6 +21,7 @@ export default function DashboardLayout({
       </div>
 
       <MobileNav />
+      <CheckInFAB />
     </div>
   );
 }

@@ -8,6 +8,7 @@ const CATEGORY_STYLES: Record<InsightCategory, string> = {
   correlation: "bg-purple-500/15 text-purple-400 ring-purple-500/20",
   goal: "bg-amber-500/15 text-amber-400 ring-amber-500/20",
   general: "bg-zinc-500/15 text-zinc-400 ring-zinc-500/20",
+  wellbeing: "bg-emerald-500/15 text-emerald-400 ring-emerald-500/20",
 };
 
 const CATEGORY_LABELS: Record<InsightCategory, string> = {
@@ -17,6 +18,7 @@ const CATEGORY_LABELS: Record<InsightCategory, string> = {
   correlation: "Correlation",
   goal: "Goal",
   general: "General",
+  wellbeing: "Wellbeing",
 };
 
 interface BadgeProps {

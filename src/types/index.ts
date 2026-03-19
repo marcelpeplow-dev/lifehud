@@ -86,7 +86,19 @@ export type InsightCategory =
   | "recovery"
   | "correlation"
   | "goal"
-  | "general";
+  | "general"
+  | "wellbeing";
+
+export interface CheckIn {
+  id: string;
+  user_id: string;
+  date: string; // "YYYY-MM-DD"
+  mood: number;   // 1–10
+  energy: number; // 1–10
+  stress: number; // 1–10
+  notes: string | null;
+  created_at: string;
+}
 
 export interface Insight {
   id: string;
@@ -159,6 +171,11 @@ export interface Database {
         Insert: Omit<Insight, "id" | "created_at">;
         Update: Partial<Insight>;
       };
+      daily_checkins: {
+        Row: CheckIn;
+        Insert: Omit<CheckIn, "id" | "created_at">;
+        Update: Partial<CheckIn>;
+      };
       goals: {
         Row: Goal;
         Insert: Omit<Goal, "id" | "created_at" | "updated_at">;
@@ -182,7 +199,12 @@ export interface DetectedPattern {
     | "resting_hr_trend"
     | "recovery_pattern"
     | "step_count_trend"
-    | "personal_record";
+    | "personal_record"
+    | "mood_sleep_correlation"
+    | "energy_workout_correlation"
+    | "stress_sleep_correlation"
+    | "mood_trend"
+    | "streak_recognition";
   description: string;
   data: Record<string, unknown>;
   significance: PatternSignificance;

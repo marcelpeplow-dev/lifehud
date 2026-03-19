@@ -1,5 +1,5 @@
 import { format, subDays, startOfWeek } from "date-fns";
-import type { SleepRecord, Workout, DailyMetrics, DetectedPattern } from "@/types/index";
+import type { SleepRecord, Workout, DailyMetrics, CheckIn, DetectedPattern } from "@/types/index";
 
 function mean(values: number[]): number {
   if (!values.length) return 0;
@@ -26,10 +26,11 @@ export interface PatternInput {
   sleepRecords: SleepRecord[];
   workouts: Workout[];
   dailyMetrics: DailyMetrics[];
+  checkIns: CheckIn[];
   today: Date;
 }
 
-export function detectPatterns({ sleepRecords, workouts, dailyMetrics, today }: PatternInput): DetectedPattern[] {
+export function detectPatterns({ sleepRecords, workouts, dailyMetrics, checkIns, today }: PatternInput): DetectedPattern[] {
   const patterns: DetectedPattern[] = [];
 
   const weekStart = format(startOfWeek(today, { weekStartsOn: 1 }), "yyyy-MM-dd");
@@ -190,7 +191,127 @@ export function detectPatterns({ sleepRecords, workouts, dailyMetrics, today }: 
     }
   }
 
-  // Sort by significance
+  // ── 8. Mood ↔ sleep correlation ───────────────────────────────────────────
+  if (checkIns.length >= 5) {
+    const sleepByDate = new Map(sleepRecords.map((s) => [s.date, s.duration_minutes]));
+    const moodAfterGoodSleep: number[] = [];
+    const moodAfterPoorSleep: number[] = [];
+
+    checkIns.forEach((c) => {
+      const prevDate = format(subDays(new Date(c.date), 1), "yyyy-MM-dd");
+      const sleep = sleepByDate.get(prevDate);
+      if (sleep == null) return;
+      if (sleep >= 420) moodAfterGoodSleep.push(c.mood);
+      else if (sleep < 360) moodAfterPoorSleep.push(c.mood);
+    });
+
+    if (moodAfterGoodSleep.length >= 3 && moodAfterPoorSleep.length >= 3) {
+      const goodAvg = Math.round(mean(moodAfterGoodSleep) * 10) / 10;
+      const poorAvg = Math.round(mean(moodAfterPoorSleep) * 10) / 10;
+      const delta = goodAvg - poorAvg;
+      if (delta >= 1.0) {
+        patterns.push({
+          type: "mood_sleep_correlation",
+          description: `Mood averages ${goodAvg}/10 after 7h+ sleep vs ${poorAvg}/10 after under 6h — a ${delta.toFixed(1)} point difference.`,
+          data: { mood_good_sleep: goodAvg, mood_poor_sleep: poorAvg, delta },
+          significance: delta >= 2.0 ? "high" : "medium",
+        });
+      }
+    }
+  }
+
+  // ── 9. Energy ↔ workout correlation ──────────────────────────────────────
+  if (checkIns.length >= 5) {
+    const workoutDates = new Set(workouts.map((w) => w.date));
+    const energyWorkout: number[] = [];
+    const energyRest: number[] = [];
+
+    checkIns.forEach((c) => {
+      if (workoutDates.has(c.date)) energyWorkout.push(c.energy);
+      else energyRest.push(c.energy);
+    });
+
+    if (energyWorkout.length >= 3 && energyRest.length >= 3) {
+      const workoutAvg = Math.round(mean(energyWorkout) * 10) / 10;
+      const restAvg = Math.round(mean(energyRest) * 10) / 10;
+      const delta = Math.abs(workoutAvg - restAvg);
+      if (delta >= 1.0) {
+        patterns.push({
+          type: "energy_workout_correlation",
+          description: `Energy averages ${workoutAvg}/10 on workout days vs ${restAvg}/10 on rest days.`,
+          data: { energy_workout: workoutAvg, energy_rest: restAvg, delta },
+          significance: delta >= 2.0 ? "high" : "medium",
+        });
+      }
+    }
+  }
+
+  // ── 10. Stress → next-night sleep correlation ─────────────────────────────
+  if (checkIns.length >= 5) {
+    const sleepByDate = new Map(sleepRecords.map((s) => [s.date, s.duration_minutes]));
+    const sleepAfterHighStress: number[] = [];
+    const sleepAfterLowStress: number[] = [];
+
+    checkIns.forEach((c) => {
+      const nextDate = format(subDays(new Date(c.date), -1), "yyyy-MM-dd");
+      const sleep = sleepByDate.get(nextDate);
+      if (sleep == null) return;
+      if (c.stress >= 7) sleepAfterHighStress.push(sleep);
+      else if (c.stress <= 3) sleepAfterLowStress.push(sleep);
+    });
+
+    if (sleepAfterHighStress.length >= 2 && sleepAfterLowStress.length >= 2) {
+      const highAvgH = Math.round((mean(sleepAfterHighStress) / 60) * 10) / 10;
+      const lowAvgH = Math.round((mean(sleepAfterLowStress) / 60) * 10) / 10;
+      const delta = lowAvgH - highAvgH;
+      if (delta >= 0.3) {
+        patterns.push({
+          type: "stress_sleep_correlation",
+          description: `High-stress days are followed by ${delta.toFixed(1)}h less sleep (${highAvgH}h vs ${lowAvgH}h after calm days).`,
+          data: { sleep_after_stress: highAvgH, sleep_after_calm: lowAvgH, delta_hours: delta },
+          significance: delta >= 0.75 ? "high" : "medium",
+        });
+      }
+    }
+  }
+
+  // ── 11. Mood trend ────────────────────────────────────────────────────────
+  if (checkIns.length >= 8) {
+    const moods = checkIns.map((c) => c.mood);
+    const trend = halfTrend(moods);
+    const mid = Math.floor(moods.length / 2);
+    const recentAvg = Math.round(mean(moods.slice(mid)) * 10) / 10;
+    const priorAvg = Math.round(mean(moods.slice(0, mid)) * 10) / 10;
+    const delta = Math.abs(recentAvg - priorAvg);
+    if (trend !== "flat" && delta >= 0.8) {
+      patterns.push({
+        type: "mood_trend",
+        description: `Mood trending ${trend}: recent avg ${recentAvg}/10 vs ${priorAvg}/10 earlier (${trend === "up" ? "+" : "-"}${delta.toFixed(1)} points).`,
+        data: { trend, recent_avg: recentAvg, prior_avg: priorAvg, delta },
+        significance: delta >= 1.5 ? "high" : "medium",
+      });
+    }
+  }
+
+  // ── 12. Check-in streak recognition ──────────────────────────────────────
+  if (checkIns.length >= 7) {
+    const dates = new Set(checkIns.map((c) => c.date));
+    let streak = 0;
+    let d = today;
+    while (dates.has(format(d, "yyyy-MM-dd"))) {
+      streak++;
+      d = subDays(d, 1);
+    }
+    if (streak >= 7) {
+      patterns.push({
+        type: "streak_recognition",
+        description: `${streak}-day check-in streak — consistent self-tracking for ${streak >= 30 ? "a full month" : streak >= 14 ? "two weeks" : "a week"}.`,
+        data: { streak_days: streak },
+        significance: streak >= 30 ? "high" : streak >= 14 ? "medium" : "low",
+      });
+    }
+  }
+
   const order = { high: 0, medium: 1, low: 2 };
   return patterns.sort((a, b) => order[a.significance] - order[b.significance]);
 }

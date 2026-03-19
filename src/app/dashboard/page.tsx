@@ -1,5 +1,6 @@
 import { format, subDays, startOfWeek } from "date-fns";
-import { Moon, Dumbbell, Heart, Activity } from "lucide-react";
+import { Moon, Dumbbell, Heart, Activity, SmilePlus } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { InsightCard } from "@/components/dashboard/InsightCard";
@@ -7,7 +8,7 @@ import { SleepChart } from "@/components/charts/SleepChart";
 import { ActivityChart } from "@/components/charts/ActivityChart";
 import { buildDateArray, formatRelativeDate } from "@/lib/utils/dates";
 import { formatDuration, formatMetric, calcTrend, average, calcProgress } from "@/lib/utils/metrics";
-import type { Insight, Goal, SleepChartDataPoint, WorkoutChartDataPoint } from "@/types/index";
+import type { Insight, Goal, CheckIn, SleepChartDataPoint, WorkoutChartDataPoint } from "@/types/index";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -29,6 +30,7 @@ export default async function DashboardPage() {
     { data: rawInsights },
     { data: activeGoals },
     { data: last7Workouts },
+    { data: todayCheckInData },
   ] = await Promise.all([
     supabase
       .from("sleep_records")
@@ -72,6 +74,12 @@ export default async function DashboardPage() {
       .eq("user_id", user.id)
       .gte("date", sevenDaysAgo)
       .order("date", { ascending: false }),
+    supabase
+      .from("daily_checkins")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("date", todayStr)
+      .maybeSingle(),
   ]);
 
   // ── Metric computations ──────────────────────────────────────────────────
@@ -138,6 +146,7 @@ export default async function DashboardPage() {
     }
   }
 
+  const todayCheckIn = todayCheckInData as CheckIn | null;
   const insights = (rawInsights ?? []) as Insight[];
   const goals = (activeGoals ?? []) as Goal[];
   const sleepGoal = goals.find((g) => g.metric_name === "sleep_duration");
@@ -196,6 +205,35 @@ export default async function DashboardPage() {
             trendPositive={true}
             icon={Activity}
           />
+        </div>
+      </section>
+
+      {/* Today's check-in */}
+      <section>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <SmilePlus className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-zinc-50">Today&apos;s check-in</p>
+                {todayCheckIn ? (
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    Mood&nbsp;<span className="text-emerald-400 font-semibold">{todayCheckIn.mood}</span>
+                    &ensp;Energy&nbsp;<span className="text-amber-400 font-semibold">{todayCheckIn.energy}</span>
+                    &ensp;Stress&nbsp;<span className="text-red-400 font-semibold">{todayCheckIn.stress}</span>
+                  </p>
+                ) : (
+                  <p className="text-xs text-zinc-500 mt-0.5">How are you feeling today?</p>
+                )}
+              </div>
+            </div>
+            <Link
+              href="/dashboard/checkins"
+              className="text-xs text-zinc-400 hover:text-zinc-50 transition-colors"
+            >
+              View history →
+            </Link>
+          </div>
         </div>
       </section>
 
