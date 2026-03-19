@@ -243,17 +243,12 @@ export type PatternSignificance = "high" | "medium" | "low";
 export interface DetectedPattern {
   type:
     | "sleep_performance_correlation"
-    | "sleep_consistency"
-    | "workout_frequency_trend"
-    | "resting_hr_trend"
-    | "recovery_pattern"
-    | "step_count_trend"
-    | "personal_record"
+    | "sleep_quality_correlation"
     | "mood_sleep_correlation"
     | "energy_workout_correlation"
     | "stress_sleep_correlation"
-    | "mood_trend"
-    | "streak_recognition";
+    | "bedtime_energy_correlation"
+    | "workout_stress_correlation";
   description: string;
   data: Record<string, unknown>;
   significance: PatternSignificance;
@@ -273,6 +268,7 @@ export interface RawInsight {
   title: string;
   body: string;
   priority: number;
+  confidence: "high" | "medium" | "speculative";
 }
 
 // ============================================================

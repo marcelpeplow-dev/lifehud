@@ -80,10 +80,29 @@ export async function POST() {
     const avgMood = checkIns.length > 0 ? average(checkIns.map((c) => c.mood)) : null;
     const avgEnergy = checkIns.length > 0 ? average(checkIns.map((c) => c.energy)) : null;
     const avgStress = checkIns.length > 0 ? average(checkIns.map((c) => c.stress)) : null;
+
+    // Deep+REM quality percentage
+    const sleepWithStages = sleepRecords.filter(
+      (s) => s.duration_minutes && s.duration_minutes > 0 &&
+        ((s.deep_sleep_minutes ?? 0) + (s.rem_sleep_minutes ?? 0)) > 0
+    );
+    const avgDeepRemPct = sleepWithStages.length > 0
+      ? average(sleepWithStages.map((s) =>
+          ((s.deep_sleep_minutes ?? 0) + (s.rem_sleep_minutes ?? 0)) / s.duration_minutes!
+        ))
+      : null;
+
+    const lastNight = sleepRecords.at(-1);
+    const lastNightSleepHours = lastNight?.duration_minutes != null
+      ? lastNight.duration_minutes / 60
+      : null;
+
     const context = {
       nightCount: sleepRecords.length,
       workoutCount: workouts.length,
       avgSleepHours: avgSleepMinutes != null ? avgSleepMinutes / 60 : null,
+      avgDeepRemPct,
+      lastNightSleepHours,
       checkInCount: checkIns.length,
       avgMood,
       avgEnergy,
@@ -101,7 +120,7 @@ export async function POST() {
       title: insight.title,
       body: insight.body,
       priority: insight.priority,
-      data_points: { patterns_used: patterns.slice(0, 3).map((p) => p.type) },
+      data_points: { patterns_used: patterns.slice(0, 3).map((p) => p.type), confidence: insight.confidence },
       is_read: false,
       is_dismissed: false,
     }));
