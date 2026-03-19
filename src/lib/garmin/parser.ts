@@ -1,5 +1,8 @@
 import Papa from "papaparse";
 import { format, subDays, parseISO } from "date-fns";
+import type { DeviceImportData } from "@/types/index";
+
+export type { DeviceImportData as GarminImportData };
 
 export interface GarminSleepRow {
   date: string;
@@ -34,11 +37,7 @@ export interface GarminMetricsRow {
   calories_active: number | null;
 }
 
-export interface GarminImportData {
-  sleep: GarminSleepRow[];
-  workouts: GarminWorkoutRow[];
-  metrics: GarminMetricsRow[];
-}
+// GarminImportData is now an alias for DeviceImportData (exported above)
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
@@ -199,7 +198,7 @@ function parseDailyMetrics(csv: string): GarminMetricsRow[] {
 
 // ─── MAIN ENTRY POINT ─────────────────────────────────────────────────────────
 
-export async function parseGarminZip(file: File): Promise<GarminImportData> {
+export async function parseGarminZip(file: File): Promise<DeviceImportData> {
   const JSZip = (await import("jszip")).default;
   const zip = await JSZip.loadAsync(file);
 

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import type { GarminImportData } from "@/lib/garmin/parser";
+import type { DeviceImportData } from "@/types/index";
+
+const VALID_SOURCES = ["garmin_csv", "fitbit_csv", "apple_health_csv"];
 
 export async function POST(request: Request) {
   try {
@@ -10,13 +12,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = (await request.json()) as GarminImportData;
+    const body = (await request.json()) as DeviceImportData & { source?: string };
     const { sleep = [], workouts = [], metrics = [] } = body;
+    const source = VALID_SOURCES.includes(body.source ?? "") ? body.source! : "garmin_csv";
 
     // ── Sleep records (upsert on user_id + date) ────────────────────────────
     let sleepCount = 0;
     if (sleep.length > 0) {
-      const sleepRows = sleep.map((r) => ({ ...r, user_id: user.id, source: "garmin_csv" }));
+      const sleepRows = sleep.map((r) => ({ ...r, user_id: user.id, source }));
       const { error } = await supabase
         .from("sleep_records")
         .upsert(sleepRows, { onConflict: "user_id,date" });
@@ -24,7 +27,7 @@ export async function POST(request: Request) {
       sleepCount = sleep.length;
     }
 
-    // ── Workouts (delete+insert — no unique constraint on date) ─────────────
+    // ── Workouts (delete+insert per source — no unique constraint on date) ──
     let workoutCount = 0;
     if (workouts.length > 0) {
       const dates = [...new Set(workouts.map((w) => w.date))];
@@ -32,10 +35,10 @@ export async function POST(request: Request) {
         .from("workouts")
         .delete()
         .eq("user_id", user.id)
-        .eq("source", "garmin_csv")
+        .eq("source", source)
         .in("date", dates);
 
-      const workoutRows = workouts.map((r) => ({ ...r, user_id: user.id, source: "garmin_csv" }));
+      const workoutRows = workouts.map((r) => ({ ...r, user_id: user.id, source }));
       const { error } = await supabase.from("workouts").insert(workoutRows);
       if (error) throw new Error(`Workout insert: ${error.message}`);
       workoutCount = workouts.length;
@@ -44,7 +47,7 @@ export async function POST(request: Request) {
     // ── Daily metrics (upsert on user_id + date) ────────────────────────────
     let metricsCount = 0;
     if (metrics.length > 0) {
-      const metricsRows = metrics.map((r) => ({ ...r, user_id: user.id, source: "garmin_csv" }));
+      const metricsRows = metrics.map((r) => ({ ...r, user_id: user.id, source }));
       const { error } = await supabase
         .from("daily_metrics")
         .upsert(metricsRows, { onConflict: "user_id,date" });

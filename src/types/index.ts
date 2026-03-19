@@ -186,6 +186,55 @@ export interface Database {
 }
 
 // ============================================================
+// CSV IMPORT TYPES (shared across Garmin, Fitbit, Apple Health)
+// ============================================================
+
+export interface ImportSleepRow {
+  date: string;
+  bedtime?: string | null;
+  wake_time?: string | null;
+  duration_minutes?: number | null;
+  deep_sleep_minutes?: number | null;
+  rem_sleep_minutes?: number | null;
+  light_sleep_minutes?: number | null;
+  awake_minutes?: number | null;
+  sleep_score?: number | null;
+  avg_heart_rate?: number | null;
+  avg_hrv?: number | null;
+}
+
+export interface ImportWorkoutRow {
+  date: string;
+  started_at?: string | null;
+  ended_at?: string | null;
+  duration_minutes?: number | null;
+  workout_type: "strength" | "cardio" | "flexibility" | "sport" | "other";
+  activity_name?: string | null;
+  calories_burned?: number | null;
+  avg_heart_rate?: number | null;
+  max_heart_rate?: number | null;
+  distance_meters?: number | null;
+  intensity_score?: number | null;
+}
+
+export interface ImportMetricsRow {
+  date: string;
+  steps?: number | null;
+  resting_heart_rate?: number | null;
+  hrv_average?: number | null;
+  stress_score?: number | null;
+  calories_total?: number | null;
+  calories_active?: number | null;
+  active_minutes?: number | null;
+}
+
+export interface DeviceImportData {
+  sleep: ImportSleepRow[];
+  workouts: ImportWorkoutRow[];
+  metrics: ImportMetricsRow[];
+}
+
+// ============================================================
 // PATTERN ANALYSIS TYPES
 // ============================================================
 

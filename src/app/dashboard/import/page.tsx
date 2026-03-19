@@ -1,5 +1,5 @@
 import { Upload } from "lucide-react";
-import { GarminImport } from "@/components/import/GarminImport";
+import { ImportFlow } from "@/components/import/ImportFlow";
 
 export default function ImportPage() {
   return (
@@ -10,11 +10,11 @@ export default function ImportPage() {
           <h1 className="text-2xl font-semibold text-zinc-50 tracking-tight">Import data</h1>
         </div>
         <p className="text-sm text-zinc-400">
-          Import your Garmin Connect export to populate sleep, workouts, and daily metrics.
+          Import from Garmin, Fitbit, or Apple Health (via QS Access) to populate sleep, workouts, and daily metrics.
         </p>
       </div>
 
-      <GarminImport />
+      <ImportFlow />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-const CLEARABLE_SOURCES = ["garmin_csv", "seed"];
+const CLEARABLE_SOURCES = ["garmin_csv", "fitbit_csv", "apple_health_csv", "seed"];
 
 export async function DELETE() {
   try {
