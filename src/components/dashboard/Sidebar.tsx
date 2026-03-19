@@ -11,6 +11,7 @@ import {
   Target,
   Settings,
   LogOut,
+  Upload,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
@@ -86,6 +87,23 @@ export function Sidebar() {
 
       {/* Bottom section */}
       <div className="px-3 py-4 border-t border-zinc-800 space-y-0.5">
+        <Link
+          href="/dashboard/import"
+          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group ${
+            isActive("/dashboard/import")
+              ? "bg-zinc-800 text-zinc-50"
+              : "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/60"
+          }`}
+        >
+          <Upload
+            className={`w-4 h-4 shrink-0 transition-colors ${
+              isActive("/dashboard/import")
+                ? "text-emerald-400"
+                : "text-zinc-500 group-hover:text-zinc-300"
+            }`}
+          />
+          Import data
+        </Link>
         <Link
           href="/dashboard/settings"
           className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group ${
