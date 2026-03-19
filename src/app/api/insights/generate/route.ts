@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 import { format, subDays } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { detectPatterns } from "@/lib/analysis/patterns";
-import { generateInsights } from "@/lib/ai/generate";
+import { detectBasicStats } from "@/lib/analysis/patterns";
+import { generateInsights, generateDailyAction } from "@/lib/ai/generate";
 import { average } from "@/lib/utils/metrics";
 import type { SleepRecord, Workout, DailyMetrics, CheckIn, InsightCategory } from "@/types/index";
 
@@ -18,7 +20,7 @@ export async function POST() {
     const todayStr = format(today, "yyyy-MM-dd");
     const thirtyDaysAgo = format(subDays(today, 30), "yyyy-MM-dd");
 
-    // Check for already-generated insights today (avoid duplicates)
+    // Check for already-generated insights today
     const { data: existingToday } = await supabase
       .from("insights")
       .select("id")
@@ -37,30 +39,10 @@ export async function POST() {
       { data: metricsData },
       { data: checkInData },
     ] = await Promise.all([
-      supabase
-        .from("sleep_records")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("date", thirtyDaysAgo)
-        .order("date", { ascending: true }),
-      supabase
-        .from("workouts")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("date", thirtyDaysAgo)
-        .order("date", { ascending: true }),
-      supabase
-        .from("daily_metrics")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("date", thirtyDaysAgo)
-        .order("date", { ascending: true }),
-      supabase
-        .from("daily_checkins")
-        .select("*")
-        .eq("user_id", user.id)
-        .gte("date", thirtyDaysAgo)
-        .order("date", { ascending: true }),
+      supabase.from("sleep_records").select("*").eq("user_id", user.id).gte("date", thirtyDaysAgo).order("date", { ascending: true }),
+      supabase.from("workouts").select("*").eq("user_id", user.id).gte("date", thirtyDaysAgo).order("date", { ascending: true }),
+      supabase.from("daily_metrics").select("*").eq("user_id", user.id).gte("date", thirtyDaysAgo).order("date", { ascending: true }),
+      supabase.from("daily_checkins").select("*").eq("user_id", user.id).gte("date", thirtyDaysAgo).order("date", { ascending: true }),
     ]);
 
     const sleepRecords = (sleepData ?? []) as SleepRecord[];
@@ -68,20 +50,20 @@ export async function POST() {
     const dailyMetrics = (metricsData ?? []) as DailyMetrics[];
     const checkIns = (checkInData ?? []) as CheckIn[];
 
-    // Detect patterns
-    const patterns = detectPatterns({ sleepRecords, workouts, dailyMetrics, checkIns, today });
+    // Detect patterns (cross-domain) and basic stats
+    const crossDomainPatterns = detectPatterns({ sleepRecords, workouts, dailyMetrics, checkIns, today });
+    const basicStats = detectBasicStats({ sleepRecords, workouts, dailyMetrics, checkIns, today });
 
-    if (patterns.length === 0) {
+    if (crossDomainPatterns.length === 0 && basicStats.length === 0) {
       return NextResponse.json({ message: "Not enough data for pattern detection", generated: 0 });
     }
 
-    // Build context summary for Claude
+    // Build context
     const avgSleepMinutes = average(sleepRecords.map((s) => s.duration_minutes));
     const avgMood = checkIns.length > 0 ? average(checkIns.map((c) => c.mood)) : null;
     const avgEnergy = checkIns.length > 0 ? average(checkIns.map((c) => c.energy)) : null;
     const avgStress = checkIns.length > 0 ? average(checkIns.map((c) => c.stress)) : null;
 
-    // Deep+REM quality percentage
     const sleepWithStages = sleepRecords.filter(
       (s) => s.duration_minutes && s.duration_minutes > 0 &&
         ((s.deep_sleep_minutes ?? 0) + (s.rem_sleep_minutes ?? 0)) > 0
@@ -110,7 +92,7 @@ export async function POST() {
     };
 
     // Generate insights via Claude
-    const rawInsights = await generateInsights(patterns, context);
+    const rawInsights = await generateInsights(crossDomainPatterns, basicStats, context);
 
     // Insert into DB
     const rows = rawInsights.map((insight) => ({
@@ -120,13 +102,46 @@ export async function POST() {
       title: insight.title,
       body: insight.body,
       priority: insight.priority,
-      data_points: { patterns_used: patterns.slice(0, 3).map((p) => p.type), confidence: insight.confidence },
+      rarity: insight.rarity,
+      data_points: {
+        patterns_used: crossDomainPatterns.slice(0, 3).map((p) => p.type),
+        confidence: insight.confidence,
+      },
       is_read: false,
       is_dismissed: false,
     }));
 
     const { data: inserted, error } = await supabase.from("insights").insert(rows).select();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    // Generate daily action (non-blocking — don't fail if this errors)
+    try {
+      const sevenDaysAgo = format(subDays(today, 7), "yyyy-MM-dd");
+      const recentWorkouts = workouts.filter((w) => w.date >= sevenDaysAgo);
+      const last7Checkins = checkIns.filter((c) => c.date >= sevenDaysAgo);
+
+      const actionText = await generateDailyAction({
+        lastNightSleepHours,
+        avgSleepHours: avgSleepMinutes != null ? avgSleepMinutes / 60 : null,
+        recentWorkoutCount: recentWorkouts.length,
+        lastWorkoutDate: workouts.at(-1)?.date ?? null,
+        avgMood: last7Checkins.length > 0 ? average(last7Checkins.map((c) => c.mood)) : null,
+        avgEnergy: last7Checkins.length > 0 ? average(last7Checkins.map((c) => c.energy)) : null,
+        avgStress: last7Checkins.length > 0 ? average(last7Checkins.map((c) => c.stress)) : null,
+        topPattern: crossDomainPatterns[0]?.description ?? null,
+      });
+
+      if (actionText) {
+        const serviceClient = createServiceClient();
+        await serviceClient.from("daily_actions").upsert({
+          user_id: user.id,
+          date: todayStr,
+          text: actionText,
+        }, { onConflict: "user_id,date" });
+      }
+    } catch {
+      // Daily action failure is non-fatal
+    }
 
     return NextResponse.json({ generated: inserted?.length ?? 0, insights: inserted });
   } catch (err) {

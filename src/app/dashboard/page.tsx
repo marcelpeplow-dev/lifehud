@@ -1,14 +1,15 @@
 import { format, subDays, startOfWeek } from "date-fns";
-import { Moon, Dumbbell, Heart, Activity, SmilePlus } from "lucide-react";
+import { Moon, Dumbbell, Heart, Activity, SmilePlus, Flame } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { InsightCard } from "@/components/dashboard/InsightCard";
+import { DailyActionCard } from "@/components/dashboard/DailyActionCard";
 import { SleepChart } from "@/components/charts/SleepChart";
 import { ActivityChart } from "@/components/charts/ActivityChart";
 import { buildDateArray, formatRelativeDate } from "@/lib/utils/dates";
 import { formatDuration, formatMetric, calcTrend, average, calcProgress } from "@/lib/utils/metrics";
-import type { Insight, Goal, CheckIn, SleepChartDataPoint, WorkoutChartDataPoint } from "@/types/index";
+import type { Insight, Goal, CheckIn, DailyAction, SleepChartDataPoint, WorkoutChartDataPoint } from "@/types/index";
 import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
@@ -32,6 +33,8 @@ export default async function DashboardPage() {
     { data: activeGoals },
     { data: last7Workouts },
     { data: todayCheckInData },
+    { data: dailyActionData },
+    { data: allCheckInDates },
   ] = await Promise.all([
     supabase
       .from("sleep_records")
@@ -81,6 +84,18 @@ export default async function DashboardPage() {
       .eq("user_id", user.id)
       .eq("date", todayStr)
       .maybeSingle(),
+    supabase
+      .from("daily_actions")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("date", todayStr)
+      .maybeSingle(),
+    supabase
+      .from("daily_checkins")
+      .select("date")
+      .eq("user_id", user.id)
+      .gte("date", format(subDays(today, 90), "yyyy-MM-dd"))
+      .order("date", { ascending: false }),
   ]);
 
   // ── Metric computations ──────────────────────────────────────────────────
@@ -147,7 +162,22 @@ export default async function DashboardPage() {
     }
   }
 
+  // Check-in streak
+  const checkinDates = new Set((allCheckInDates ?? []).map((c: { date: string }) => c.date));
+  let checkinStreak = 0;
+  let sd = new Date();
+  while (checkinDates.has(format(sd, "yyyy-MM-dd"))) {
+    checkinStreak++;
+    sd = subDays(sd, 1);
+  }
+
+  // Last updated: most recent sleep, workout, or metric record
+  const lastSleepDate = recentSleep?.[0]?.date ?? null;
+  const lastMetricDate = recentMetrics?.[0]?.date ?? null;
+  const lastUpdatedDate = [lastSleepDate, lastMetricDate].filter(Boolean).sort().at(-1) ?? null;
+
   const todayCheckIn = todayCheckInData as CheckIn | null;
+  const dailyAction = dailyActionData as DailyAction | null;
   const insights = (rawInsights ?? []) as Insight[];
   const goals = (activeGoals ?? []) as Goal[];
   const sleepGoal = goals.find((g) => g.metric_name === "sleep_duration");
@@ -162,14 +192,26 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-semibold text-zinc-50 tracking-tight">
-          {greeting}
-        </h1>
-        <p className="text-sm text-zinc-400 mt-0.5">
-          {format(today, "EEEE, MMMM d")}
-        </p>
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-zinc-50 tracking-tight">
+            {greeting}
+          </h1>
+          <p className="text-sm text-zinc-400 mt-0.5">
+            {format(today, "EEEE, MMMM d")}
+          </p>
+        </div>
+        {lastUpdatedDate && (
+          <p className="text-xs text-zinc-600 shrink-0 pb-0.5">
+            Data: {formatRelativeDate(lastUpdatedDate)}
+          </p>
+        )}
       </div>
+
+      {/* Daily action */}
+      <section>
+        <DailyActionCard initial={dailyAction} />
+      </section>
 
       {/* Metric cards */}
       <section>
@@ -209,7 +251,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* Today's check-in */}
+      {/* Today's check-in + streak */}
       <section>
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
           <div className="flex items-center justify-between">
@@ -224,16 +266,28 @@ export default async function DashboardPage() {
                     &ensp;Stress&nbsp;<span className="text-red-400 font-semibold">{todayCheckIn.stress}</span>
                   </p>
                 ) : (
-                  <p className="text-xs text-zinc-500 mt-0.5">How are you feeling today?</p>
+                  <p className="text-xs text-zinc-500 mt-0.5">
+                    {checkinStreak < 7
+                      ? "Check-ins help us find better patterns in your data"
+                      : "How are you feeling today?"}
+                  </p>
                 )}
               </div>
             </div>
-            <Link
-              href="/dashboard/checkins"
-              className="text-xs text-zinc-400 hover:text-zinc-50 transition-colors"
-            >
-              View history →
-            </Link>
+            <div className="flex items-center gap-3">
+              {checkinStreak > 0 && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                  <Flame className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-xs font-semibold text-amber-300">{checkinStreak}d</span>
+                </div>
+              )}
+              <Link
+                href="/dashboard/checkins"
+                className="text-xs text-zinc-400 hover:text-zinc-50 transition-colors"
+              >
+                View history →
+              </Link>
+            </div>
           </div>
         </div>
       </section>

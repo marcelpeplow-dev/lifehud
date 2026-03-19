@@ -31,6 +31,16 @@ const PRESETS: Preset[] = [
   },
 ];
 
+const METRIC_OPTIONS = [
+  { label: "Sleep Duration",     value: "sleep_duration",  unit: "min",      frequency: "daily"  },
+  { label: "Daily Steps",        value: "steps",           unit: "steps",    frequency: "daily"  },
+  { label: "Weekly Workouts",    value: "weekly_workouts", unit: "workouts", frequency: "weekly" },
+  { label: "Active Minutes",     value: "active_minutes",  unit: "min",      frequency: "daily"  },
+  { label: "Resting Heart Rate", value: "resting_hr",      unit: "bpm",      frequency: "daily"  },
+  { label: "HRV Average",        value: "hrv_average",     unit: "ms",       frequency: "daily"  },
+  { label: "Calories Burned",    value: "calories_burned", unit: "kcal",     frequency: "daily"  },
+] as const;
+
 const EMPTY = { title: "", category: "general", metric_name: "", target_value: "", target_unit: "", target_frequency: "daily", target_date: "" };
 
 export function AddGoalModal({ onClose }: { onClose: () => void }) {
@@ -148,13 +158,24 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
 
             <div>
               <label className="block text-xs font-medium text-zinc-400 mb-1.5">Metric *</label>
-              <input
-                type="text"
+              <select
                 value={form.metric_name}
-                onChange={(e) => set("metric_name", e.target.value)}
-                placeholder="e.g. sleep_duration, steps"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-emerald-500"
-              />
+                onChange={(e) => {
+                  const opt = METRIC_OPTIONS.find((m) => m.value === e.target.value);
+                  setForm((f) => ({
+                    ...f,
+                    metric_name: e.target.value,
+                    target_unit: opt?.unit ?? f.target_unit,
+                    target_frequency: opt?.frequency ?? f.target_frequency,
+                  }));
+                }}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:border-emerald-500"
+              >
+                <option value="">Select a metric…</option>
+                {METRIC_OPTIONS.map((m) => (
+                  <option key={m.value} value={m.value}>{m.label}</option>
+                ))}
+              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

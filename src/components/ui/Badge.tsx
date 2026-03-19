@@ -1,5 +1,35 @@
 import { cn } from "@/lib/utils/cn";
-import type { InsightCategory } from "@/types/index";
+import type { InsightCategory, InsightRarity } from "@/types/index";
+
+const RARITY_STYLES: Record<InsightRarity, string> = {
+  common:    "bg-zinc-700/50 text-zinc-400 ring-zinc-600/30",
+  uncommon:  "bg-green-900/40 text-green-300 ring-green-700/30",
+  rare:      "bg-blue-900/40 text-blue-300 ring-blue-700/30",
+  epic:      "bg-purple-900/40 text-violet-300 ring-purple-700/30",
+  legendary: "bg-amber-900/40 text-amber-200 ring-amber-600/30",
+};
+
+const RARITY_LABELS: Record<InsightRarity, string> = {
+  common:    "Common",
+  uncommon:  "Uncommon",
+  rare:      "Rare",
+  epic:      "Epic",
+  legendary: "Legendary",
+};
+
+export function RarityBadge({ rarity, className }: { rarity: InsightRarity; className?: string }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ring-1 ring-inset tracking-wide",
+        RARITY_STYLES[rarity],
+        className
+      )}
+    >
+      {RARITY_LABELS[rarity]}
+    </span>
+  );
+}
 
 const CATEGORY_STYLES: Record<InsightCategory, string> = {
   sleep: "bg-blue-500/15 text-blue-400 ring-blue-500/20",

@@ -176,7 +176,11 @@ export default async function FitnessPage({
                       {w.activity_name ?? TYPE_META[(w.workout_type ?? "other") as NonNullable<Workout["workout_type"]>]?.label ?? "Workout"}
                     </p>
                     <p className="text-xs text-zinc-500 mt-0.5">
-                      {formatRelativeDate(w.date)} · {formatShortDate(w.date)}
+                      {(() => {
+                        const rel = formatRelativeDate(w.date);
+                        const short = formatShortDate(w.date);
+                        return rel === short ? rel : `${rel} · ${short}`;
+                      })()}
                     </p>
                   </div>
                 </div>

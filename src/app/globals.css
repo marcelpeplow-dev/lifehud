@@ -42,3 +42,26 @@ body {
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+/* Legendary insight pulsing border */
+@keyframes legendary-pulse {
+  0%, 100% { border-color: #854D0E; box-shadow: 0 0 0 0 rgba(202, 138, 4, 0); }
+  50%       { border-color: #CA8A04; box-shadow: 0 0 10px 2px rgba(202, 138, 4, 0.25); }
+}
+.legendary-pulse {
+  animation: legendary-pulse 2.4s ease-in-out infinite;
+}
+
+/* Legendary card shake on reveal */
+@keyframes legendary-shake {
+  0%, 100% { transform: translateX(0); }
+  15%      { transform: translateX(-6px); }
+  30%      { transform: translateX(6px); }
+  45%      { transform: translateX(-4px); }
+  60%      { transform: translateX(4px); }
+  75%      { transform: translateX(-2px); }
+  90%      { transform: translateX(2px); }
+}
+.legendary-shake {
+  animation: legendary-shake 0.45s ease-out forwards;
+}

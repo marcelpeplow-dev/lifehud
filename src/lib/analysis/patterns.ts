@@ -1,6 +1,16 @@
 import { format, subDays } from "date-fns";
 import type { SleepRecord, Workout, DailyMetrics, CheckIn, DetectedPattern } from "@/types/index";
 
+function halfTrend(values: number[]): "up" | "down" | "flat" {
+  if (values.length < 4) return "flat";
+  const mid = Math.floor(values.length / 2);
+  const first = mean(values.slice(0, mid));
+  const second = mean(values.slice(mid));
+  const pct = first === 0 ? 0 : Math.abs((second - first) / first);
+  if (pct < 0.03) return "flat";
+  return second > first ? "up" : "down";
+}
+
 function mean(values: number[]): number {
   if (!values.length) return 0;
   return values.reduce((a, b) => a + b, 0) / values.length;
@@ -279,4 +289,125 @@ export function detectPatterns({ sleepRecords, workouts, checkIns }: PatternInpu
 
   const order = { high: 0, medium: 1, low: 2 };
   return patterns.sort((a, b) => order[a.significance] - order[b.significance]);
+}
+
+/** Single-domain stat summaries — feed into Common/Uncommon insight tiers. */
+export function detectBasicStats({
+  sleepRecords,
+  workouts,
+  dailyMetrics,
+  checkIns,
+}: PatternInput): DetectedPattern[] {
+  const patterns: DetectedPattern[] = [];
+
+  // ── Average sleep duration (stat summary) ────────────────────────────────
+  const sleepDurations = sleepRecords
+    .map((s) => s.duration_minutes)
+    .filter((v): v is number => v != null);
+
+  if (sleepDurations.length >= 3) {
+    const avg = mean(sleepDurations);
+    const avgH = Math.round((avg / 60) * 10) / 10;
+    patterns.push({
+      type: "stat_summary",
+      description: `Average sleep over the last ${sleepDurations.length} nights: ${avgH}h.`,
+      data: { avg_minutes: Math.round(avg), avg_hours: avgH, nights: sleepDurations.length },
+      significance: "low",
+    });
+
+    // Sleep duration trend (Uncommon tier if significant)
+    const trend = halfTrend(sleepDurations.slice(-14));
+    const last7 = sleepDurations.slice(-7);
+    const prior7 = sleepDurations.slice(-14, -7);
+    if (last7.length >= 3 && prior7.length >= 3) {
+      const recentAvg = mean(last7);
+      const priorAvg = mean(prior7);
+      const deltaMins = Math.round(recentAvg - priorAvg);
+      if (trend !== "flat" && Math.abs(deltaMins) >= 20) {
+        patterns.push({
+          type: "single_domain_trend",
+          description: `Sleep duration trending ${trend}: ${deltaMins > 0 ? "+" : ""}${deltaMins} min vs prior week (recent avg ${Math.round(recentAvg / 6) / 10}h).`,
+          data: { trend, delta_minutes: deltaMins, recent_avg: Math.round(recentAvg), prior_avg: Math.round(priorAvg) },
+          significance: Math.abs(deltaMins) > 45 ? "medium" : "low",
+        });
+      }
+    }
+  }
+
+  // ── Bedtime consistency (single-domain) ──────────────────────────────────
+  const bedtimes = sleepRecords
+    .filter((s) => s.bedtime != null)
+    .map((s) => {
+      const bt = new Date(s.bedtime!);
+      const h = bt.getUTCHours() + bt.getUTCMinutes() / 60;
+      return h < 6 ? h + 24 : h;
+    });
+
+  if (bedtimes.length >= 7) {
+    const avg = mean(bedtimes);
+    const sd = Math.sqrt(mean(bedtimes.map((b) => (b - avg) ** 2)));
+    const avgH = Math.floor(avg % 24);
+    const avgM = Math.round((avg % 1) * 60);
+    if (sd > 0.5) {
+      patterns.push({
+        type: "single_domain_trend",
+        description: `Bedtime varies significantly (±${Math.round(sd * 60)} min, avg ${avgH}:${avgM.toString().padStart(2, "0")}).`,
+        data: { avg_bedtime_hhmm: `${avgH}:${avgM.toString().padStart(2, "0")}`, std_dev_mins: Math.round(sd * 60) },
+        significance: sd > 1.0 ? "medium" : "low",
+      });
+    }
+  }
+
+  // ── Resting HR trend ─────────────────────────────────────────────────────
+  const hrValues = dailyMetrics
+    .map((m) => m.resting_heart_rate)
+    .filter((v): v is number => v != null);
+
+  if (hrValues.length >= 7) {
+    const trend = halfTrend(hrValues);
+    const recentAvg = Math.round(mean(hrValues.slice(-7)));
+    const priorAvg = Math.round(mean(hrValues.slice(0, 7)));
+    const delta = recentAvg - priorAvg;
+    if (trend !== "flat") {
+      patterns.push({
+        type: "single_domain_trend",
+        description: `Resting HR ${trend === "down" ? "dropping" : "rising"}: recent avg ${recentAvg} bpm vs ${priorAvg} bpm (${delta > 0 ? "+" : ""}${delta} bpm over 30 days).`,
+        data: { trend, recent_avg: recentAvg, prior_avg: priorAvg, delta },
+        significance: Math.abs(delta) >= 5 ? "medium" : "low",
+      });
+    } else {
+      patterns.push({
+        type: "stat_summary",
+        description: `Resting heart rate stable at ~${recentAvg} bpm over the last 30 days.`,
+        data: { avg: recentAvg },
+        significance: "low",
+      });
+    }
+  }
+
+  // ── Workout frequency stat ────────────────────────────────────────────────
+  if (workouts.length > 0) {
+    const perWeek = (workouts.length / 4).toFixed(1);
+    patterns.push({
+      type: "stat_summary",
+      description: `${workouts.length} workouts in 30 days (~${perWeek}/week average).`,
+      data: { total: workouts.length, per_week: parseFloat(perWeek) },
+      significance: "low",
+    });
+  }
+
+  // ── Average mood/energy (if check-ins exist) ──────────────────────────────
+  if (checkIns.length >= 5) {
+    const avgMood = Math.round(mean(checkIns.map((c) => c.mood)) * 10) / 10;
+    const avgEnergy = Math.round(mean(checkIns.map((c) => c.energy)) * 10) / 10;
+    const avgStress = Math.round(mean(checkIns.map((c) => c.stress)) * 10) / 10;
+    patterns.push({
+      type: "stat_summary",
+      description: `Check-in averages over ${checkIns.length} days: mood ${avgMood}/10, energy ${avgEnergy}/10, stress ${avgStress}/10.`,
+      data: { avg_mood: avgMood, avg_energy: avgEnergy, avg_stress: avgStress, count: checkIns.length },
+      significance: "low",
+    });
+  }
+
+  return patterns;
 }

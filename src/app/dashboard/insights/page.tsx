@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { InsightCard } from "@/components/dashboard/InsightCard";
 import { CategoryFilter, StatusFilter } from "@/components/insights/InsightFilters";
 import { GenerateButton } from "@/components/insights/GenerateButton";
+import { RevealSection } from "@/components/insights/RevealSection";
 import type { Insight, InsightCategory } from "@/types/index";
 import { redirect } from "next/navigation";
 
@@ -42,13 +43,17 @@ export default async function InsightsPage({
   const { data } = await query;
   const insights = (data ?? []) as Insight[];
 
-  // Unread count for badge (always count non-dismissed unread)
-  const { count: unreadCount } = await supabase
+  // Unread insights (for pack reveal prompt)
+  const { data: unreadData, count: unreadCount } = await supabase
     .from("insights")
-    .select("id", { count: "exact", head: true })
+    .select("*", { count: "exact" })
     .eq("user_id", user.id)
     .eq("is_dismissed", false)
-    .eq("is_read", false);
+    .eq("is_read", false)
+    .order("date", { ascending: false })
+    .order("priority", { ascending: false })
+    .limit(12);
+  const unreadInsights = (unreadData ?? []) as Insight[];
 
   return (
     <div className="space-y-6">
@@ -67,6 +72,11 @@ export default async function InsightsPage({
         </div>
         <GenerateButton />
       </div>
+
+      {/* Unread pack reveal prompt */}
+      {unreadInsights.length > 0 && (
+        <RevealSection insights={unreadInsights} />
+      )}
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">

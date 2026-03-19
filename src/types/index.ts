@@ -109,6 +109,7 @@ export interface Insight {
   body: string;
   data_points: Record<string, unknown> | null;
   priority: number; // 0–5, higher = more important
+  rarity?: InsightRarity; // optional until migration is run
   is_read: boolean;
   is_dismissed: boolean;
   created_at: string;
@@ -240,6 +241,16 @@ export interface DeviceImportData {
 
 export type PatternSignificance = "high" | "medium" | "low";
 
+export type InsightRarity = "common" | "uncommon" | "rare" | "epic" | "legendary";
+
+export interface DailyAction {
+  id: string;
+  user_id: string;
+  date: string;
+  text: string;
+  created_at: string;
+}
+
 export interface DetectedPattern {
   type:
     | "sleep_performance_correlation"
@@ -248,7 +259,9 @@ export interface DetectedPattern {
     | "energy_workout_correlation"
     | "stress_sleep_correlation"
     | "bedtime_energy_correlation"
-    | "workout_stress_correlation";
+    | "workout_stress_correlation"
+    | "stat_summary"
+    | "single_domain_trend";
   description: string;
   data: Record<string, unknown>;
   significance: PatternSignificance;
@@ -269,6 +282,7 @@ export interface RawInsight {
   body: string;
   priority: number;
   confidence: "high" | "medium" | "speculative";
+  rarity: InsightRarity;
 }
 
 // ============================================================

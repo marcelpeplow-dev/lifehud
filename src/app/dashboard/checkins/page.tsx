@@ -67,13 +67,12 @@ export default async function CheckInsPage({
     .order("date", { ascending: true });
 
   const checkins = (data ?? []) as CheckIn[];
-  const last7 = checkins.filter(
-    (c) => c.date >= format(subDays(new Date(), 6), "yyyy-MM-dd")
-  );
 
-  const avgMood = average(last7.map((c) => c.mood));
-  const avgEnergy = average(last7.map((c) => c.energy));
-  const avgStress = average(last7.map((c) => c.stress));
+  // Stat cards use the selected range (same data already filtered by startDate)
+  const avgMood = average(checkins.map((c) => c.mood));
+  const avgEnergy = average(checkins.map((c) => c.energy));
+  const avgStress = average(checkins.map((c) => c.stress));
+  const rangeLabel = range === "7d" ? "Last 7 days" : range === "30d" ? "Last 30 days" : "Last 90 days";
   const streak = calcStreak(checkins);
   const recent = [...checkins].reverse().slice(0, 14);
 
@@ -95,19 +94,19 @@ export default async function CheckInsPage({
         <StatCard
           label="Avg mood"
           value={avgMood != null ? avgMood.toFixed(1) : "—"}
-          sub="Last 7 days"
+          sub={rangeLabel}
           color={avgMood != null ? (avgMood >= 7 ? "text-emerald-400" : avgMood >= 5 ? "text-amber-400" : "text-red-400") : "text-zinc-50"}
         />
         <StatCard
           label="Avg energy"
           value={avgEnergy != null ? avgEnergy.toFixed(1) : "—"}
-          sub="Last 7 days"
+          sub={rangeLabel}
           color={avgEnergy != null ? (avgEnergy >= 7 ? "text-amber-400" : avgEnergy >= 5 ? "text-zinc-50" : "text-zinc-500") : "text-zinc-50"}
         />
         <StatCard
           label="Avg stress"
           value={avgStress != null ? avgStress.toFixed(1) : "—"}
-          sub="Last 7 days (lower is better)"
+          sub={`${rangeLabel} · lower is better`}
           color={avgStress != null ? (avgStress <= 4 ? "text-emerald-400" : avgStress <= 6 ? "text-amber-400" : "text-red-400") : "text-zinc-50"}
         />
         <StatCard
