@@ -3,7 +3,6 @@
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Upload,
   FileArchive,
   FileText,
   CheckCircle,
@@ -269,6 +268,10 @@ export function ImportFlow() {
   }
 
   async function handleClear() {
+    const confirmed = window.confirm(
+      "This will permanently delete all seeded and imported data (sleep, workouts, metrics). This cannot be undone. Continue?"
+    );
+    if (!confirmed) return;
     setClearing(true);
     await fetch("/api/import/clear", { method: "DELETE" });
     setClearing(false);

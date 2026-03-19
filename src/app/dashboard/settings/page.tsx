@@ -4,6 +4,7 @@ import { DeviceCard } from "@/components/settings/DeviceCard";
 import { ConnectDeviceButton } from "@/components/settings/ConnectDeviceButton";
 import { SignOutButton } from "@/components/settings/SignOutButton";
 import type { Profile, DeviceConnection } from "@/types/index";
+import { redirect } from "next/navigation";
 
 function Section({ title, description, children }: {
   title: string;
@@ -30,7 +31,7 @@ export default async function SettingsPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const [{ data: profileData }, { data: devicesData }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),

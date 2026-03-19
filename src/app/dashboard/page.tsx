@@ -9,11 +9,12 @@ import { ActivityChart } from "@/components/charts/ActivityChart";
 import { buildDateArray, formatRelativeDate } from "@/lib/utils/dates";
 import { formatDuration, formatMetric, calcTrend, average, calcProgress } from "@/lib/utils/metrics";
 import type { Insight, Goal, CheckIn, SleepChartDataPoint, WorkoutChartDataPoint } from "@/types/index";
+import { redirect } from "next/navigation";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");

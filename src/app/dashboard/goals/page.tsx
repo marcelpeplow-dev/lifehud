@@ -4,11 +4,12 @@ import { createClient } from "@/lib/supabase/server";
 import { GoalCard } from "@/components/goals/GoalCard";
 import { AddGoalButton } from "@/components/goals/AddGoalButton";
 import type { Goal } from "@/types/index";
+import { redirect } from "next/navigation";
 
 export default async function GoalsPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const today = new Date();
   const todayStr = format(today, "yyyy-MM-dd");

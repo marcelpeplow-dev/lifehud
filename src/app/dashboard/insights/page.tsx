@@ -5,8 +5,9 @@ import { InsightCard } from "@/components/dashboard/InsightCard";
 import { CategoryFilter, StatusFilter } from "@/components/insights/InsightFilters";
 import { GenerateButton } from "@/components/insights/GenerateButton";
 import type { Insight, InsightCategory } from "@/types/index";
+import { redirect } from "next/navigation";
 
-const VALID_CATEGORIES = new Set(["sleep", "fitness", "recovery", "correlation", "goal", "general"]);
+const VALID_CATEGORIES = new Set(["sleep", "fitness", "recovery", "correlation", "goal", "general", "wellbeing"]);
 const VALID_STATUSES = new Set(["active", "unread", "dismissed"]);
 
 export default async function InsightsPage({
@@ -20,7 +21,7 @@ export default async function InsightsPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   let query = supabase
     .from("insights")

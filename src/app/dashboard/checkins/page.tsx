@@ -6,6 +6,7 @@ import { CheckInChart } from "@/components/checkin/CheckInChart";
 import { DateRangeSelector } from "@/components/sleep/DateRangeSelector";
 import { average } from "@/lib/utils/metrics";
 import type { CheckIn, DateRange } from "@/types/index";
+import { redirect } from "next/navigation";
 
 function rangeToDays(r: DateRange) {
   return r === "90d" ? 90 : r === "30d" ? 30 : 7;
@@ -54,7 +55,7 @@ export default async function CheckInsPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const startDate = format(subDays(new Date(), days - 1), "yyyy-MM-dd");
 

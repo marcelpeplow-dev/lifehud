@@ -8,6 +8,7 @@ import { DateRangeSelector } from "@/components/sleep/DateRangeSelector";
 import { buildDateArray, formatRelativeDate } from "@/lib/utils/dates";
 import { formatDuration, average } from "@/lib/utils/metrics";
 import type { DateRange, SleepStagesDataPoint, SleepChartDataPoint, Goal } from "@/types/index";
+import { redirect } from "next/navigation";
 
 function rangeToDays(range: DateRange): number {
   if (range === "30d") return 30;
@@ -48,7 +49,7 @@ export default async function SleepPage({
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const today = new Date();
   const startDate = format(subDays(today, days - 1), "yyyy-MM-dd");

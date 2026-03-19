@@ -83,20 +83,29 @@ export function CheckInModal({ initialData, onClose, onSaved }: CheckInModalProp
   const [notes, setNotes] = useState(initialData?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const res = await fetch("/api/checkins", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mood, energy, stress, notes: notes.trim() || null }),
-    });
-    if (res.ok) {
-      const { checkin } = await res.json();
-      setDone(true);
-      setTimeout(() => { onSaved(checkin); onClose(); }, 1000);
-    } else {
+    setError(null);
+    try {
+      const res = await fetch("/api/checkins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mood, energy, stress, notes: notes.trim() || null }),
+      });
+      if (res.ok) {
+        const { checkin } = await res.json();
+        setDone(true);
+        setTimeout(() => { onSaved(checkin); onClose(); }, 1000);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "Something went wrong. Please try again.");
+        setSubmitting(false);
+      }
+    } catch {
+      setError("Network error. Please check your connection.");
       setSubmitting(false);
     }
   }
@@ -181,6 +190,10 @@ export function CheckInModal({ initialData, onClose, onSaved }: CheckInModalProp
               <p className="text-xs text-zinc-600 text-right mt-1">{notes.length}/500</p>
             )}
           </div>
+
+          {error && (
+            <p className="text-xs text-red-400 text-center -mt-1">{error}</p>
+          )}
 
           <button
             type="submit"
