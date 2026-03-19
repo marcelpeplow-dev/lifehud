@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { seedUserData } from "@/lib/utils/seed";
 
 async function seed(userId?: string) {
-  if (process.env.NODE_ENV === "production") {
+  if (process.env.NODE_ENV === "production" && process.env.SEED_ENABLED !== "true") {
     return NextResponse.json({ error: "Not available in production" }, { status: 403 });
   }
   // If no user_id provided, get it from the current session

@@ -6,6 +6,8 @@ import { generateInsights } from "@/lib/ai/generate";
 import { average } from "@/lib/utils/metrics";
 import type { SleepRecord, Workout, DailyMetrics, CheckIn, InsightCategory } from "@/types/index";
 
+export const GET = POST;
+
 export async function POST() {
   try {
     const supabase = await createClient();
