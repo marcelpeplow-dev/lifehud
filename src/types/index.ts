@@ -11,6 +11,8 @@ export interface Profile {
   weight_kg: number | null;
   timezone: string;
   onboarding_completed: boolean;
+  chess_username: string | null;
+  last_chess_sync: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -87,7 +89,29 @@ export type InsightCategory =
   | "correlation"
   | "goal"
   | "general"
-  | "wellbeing";
+  | "wellbeing"
+  | "chess";
+
+export interface ChessGame {
+  id: string;
+  user_id: string;
+  game_id: string;
+  played_at: string;
+  date: string;
+  time_class: "bullet" | "blitz" | "rapid" | "daily";
+  time_control: string | null;
+  player_color: "white" | "black";
+  player_rating: number;
+  opponent_rating: number;
+  result: "win" | "loss" | "draw";
+  result_detail: string | null;
+  accuracy: number | null;
+  num_moves: number | null;
+  duration_seconds: number | null;
+  opening_name: string | null;
+  raw_pgn: string | null;
+  created_at: string;
+}
 
 export interface CheckIn {
   id: string;
@@ -177,6 +201,11 @@ export interface Database {
         Insert: Omit<CheckIn, "id" | "created_at">;
         Update: Partial<CheckIn>;
       };
+      chess_games: {
+        Row: ChessGame;
+        Insert: Omit<ChessGame, "id" | "created_at">;
+        Update: Partial<ChessGame>;
+      };
       goals: {
         Row: Goal;
         Insert: Omit<Goal, "id" | "created_at" | "updated_at">;
@@ -261,7 +290,17 @@ export interface DetectedPattern {
     | "bedtime_energy_correlation"
     | "workout_stress_correlation"
     | "stat_summary"
-    | "single_domain_trend";
+    | "single_domain_trend"
+    | "chess_rating_trend"
+    | "chess_time_of_day"
+    | "chess_opponent_strength"
+    | "chess_volume_performance"
+    | "chess_opening_performance"
+    | "chess_sleep_correlation"
+    | "chess_exercise_correlation"
+    | "chess_mood_correlation"
+    | "chess_stress_correlation"
+    | "chess_energy_correlation";
   description: string;
   data: Record<string, unknown>;
   significance: PatternSignificance;
