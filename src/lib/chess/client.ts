@@ -81,6 +81,7 @@ export interface ParsedChessGame {
   duration_seconds: number | null;
   opening_name: string | null;
   raw_pgn: string | null;
+  source: "chess.com";
 }
 
 // ============================================================
@@ -252,5 +253,6 @@ export function parseGame(game: ChessGameRaw, username: string): ParsedChessGame
     duration_seconds: durationSeconds,
     opening_name: openingName,
     raw_pgn: game.pgn ?? null,
+    source: "chess.com",
   };
 }

@@ -13,6 +13,8 @@ export interface Profile {
   onboarding_completed: boolean;
   chess_username: string | null;
   last_chess_sync: string | null;
+  lichess_username: string | null;
+  last_lichess_sync: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -110,6 +112,7 @@ export interface ChessGame {
   duration_seconds: number | null;
   opening_name: string | null;
   raw_pgn: string | null;
+  source: "chess.com" | "lichess" | null;
   created_at: string;
 }
 

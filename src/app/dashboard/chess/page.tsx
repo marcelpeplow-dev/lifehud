@@ -183,7 +183,7 @@ export default async function ChessPage({
       {noGames ? (
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 text-center">
           <p className="text-zinc-400 mb-2">No chess games found for this period.</p>
-          <p className="text-xs text-zinc-500">Connect your Chess.com account in Settings to sync games.</p>
+          <p className="text-xs text-zinc-500">Connect your Chess.com or Lichess account in Settings to sync games.</p>
         </div>
       ) : (
         <>
@@ -244,9 +244,10 @@ export default async function ChessPage({
               </h2>
               <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
                 {/* Table header */}
-                <div className="hidden md:grid grid-cols-[1fr_80px_70px_70px_60px_60px_1fr] gap-2 px-5 py-2.5 border-b border-zinc-800 text-xs font-medium text-zinc-500">
+                <div className="hidden md:grid grid-cols-[1fr_80px_50px_70px_70px_60px_60px_1fr] gap-2 px-5 py-2.5 border-b border-zinc-800 text-xs font-medium text-zinc-500">
                   <span>Date</span>
                   <span>Format</span>
+                  <span>Src</span>
                   <span className="text-right">Rating</span>
                   <span className="text-right">Opp.</span>
                   <span className="text-center">Result</span>
@@ -266,12 +267,15 @@ export default async function ChessPage({
                     return (
                       <div
                         key={game.id}
-                        className="grid grid-cols-2 md:grid-cols-[1fr_80px_70px_70px_60px_60px_1fr] gap-2 px-5 py-3 items-center text-sm"
+                        className="grid grid-cols-2 md:grid-cols-[1fr_80px_50px_70px_70px_60px_60px_1fr] gap-2 px-5 py-3 items-center text-sm"
                       >
                         <span className="text-zinc-300 text-xs">
                           {format(parseISO(game.played_at), "MMM d, h:mm a")}
                         </span>
                         <span className="text-zinc-400 text-xs capitalize">{game.time_class}</span>
+                        <span className="text-zinc-500 text-xs">
+                          {game.source === "lichess" ? "Li" : "CC"}
+                        </span>
                         <span className="text-zinc-200 text-xs tabular-nums text-right">{game.player_rating}</span>
                         <span className="text-zinc-400 text-xs tabular-nums text-right">{game.opponent_rating}</span>
                         <span className={`text-xs font-semibold text-center ${resultColor}`}>

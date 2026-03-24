@@ -7,6 +7,9 @@ import { ConnectFitbitButton } from "@/components/settings/ConnectFitbitButton";
 import { FitbitCard } from "@/components/settings/FitbitCard";
 import { ChessCard } from "@/components/settings/ChessCard";
 import { ConnectChessButton } from "@/components/settings/ConnectChessButton";
+import { LichessCard } from "@/components/settings/LichessCard";
+import { ConnectLichessButton } from "@/components/settings/ConnectLichessButton";
+import { getUser as getLichessUser } from "@/lib/lichess/client";
 import { SignOutButton } from "@/components/settings/SignOutButton";
 import type { Profile, DeviceConnection } from "@/types/index";
 import { redirect } from "next/navigation";
@@ -78,6 +81,25 @@ export default async function SettingsPage({
     } catch {
       // If Chess.com API fails, show card without ratings
       chessStats = { rapid: null, blitz: null, bullet: null };
+    }
+  }
+
+  // Fetch Lichess ratings if connected
+  let lichessStats: { rapid: number | null; blitz: number | null; bullet: number | null } | null = null;
+  if (profile?.lichess_username) {
+    try {
+      const lichessUser = await getLichessUser(profile.lichess_username);
+      if (lichessUser) {
+        lichessStats = {
+          rapid: lichessUser.perfs.rapid?.rating ?? null,
+          blitz: lichessUser.perfs.blitz?.rating ?? null,
+          bullet: lichessUser.perfs.bullet?.rating ?? null,
+        };
+      } else {
+        lichessStats = { rapid: null, blitz: null, bullet: null };
+      }
+    } catch {
+      lichessStats = { rapid: null, blitz: null, bullet: null };
     }
   }
 
@@ -163,6 +185,24 @@ export default async function SettingsPage({
           />
         ) : (
           <ConnectChessButton />
+        )}
+      </Section>
+
+      {/* Lichess */}
+      <Section
+        title="Lichess"
+        description="Connect your Lichess account to track ratings and discover cross-domain patterns."
+      >
+        {profile?.lichess_username && lichessStats ? (
+          <LichessCard
+            connection={{
+              username: profile.lichess_username,
+              lastSync: profile.last_lichess_sync ?? null,
+              ...lichessStats,
+            }}
+          />
+        ) : (
+          <ConnectLichessButton />
         )}
       </Section>
 
