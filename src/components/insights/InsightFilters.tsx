@@ -1,17 +1,16 @@
 "use client";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { DomainIcon } from "@/components/ui/Badge";
 import type { InsightCategory } from "@/types/index";
+import type { Domain } from "@/lib/insights/domains";
 
-const CATEGORIES: { label: string; value: InsightCategory | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "Sleep", value: "sleep" },
-  { label: "Fitness", value: "fitness" },
-  { label: "Recovery", value: "recovery" },
-  { label: "Wellbeing", value: "wellbeing" },
-  { label: "Correlation", value: "correlation" },
-  { label: "Goal", value: "goal" },
-  { label: "General", value: "general" },
+const DOMAINS: { label: string; value: Domain; category: InsightCategory }[] = [
+  { label: "Sleep",     value: "sleep",     category: "sleep" },
+  { label: "Fitness",   value: "fitness",   category: "fitness" },
+  { label: "Chess",     value: "chess",     category: "chess" },
+  { label: "Wellbeing", value: "wellbeing", category: "wellbeing" },
+  { label: "Recovery",  value: "recovery",  category: "recovery" },
 ];
 
 const STATUSES = [
@@ -27,28 +26,78 @@ function useParamUpdater() {
 
   return (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set(key, value);
+    if (value) params.set(key, value);
+    else params.delete(key);
     router.push(`${pathname}?${params.toString()}`);
   };
 }
 
-export function CategoryFilter({ active }: { active: string }) {
-  const update = useParamUpdater();
+/** Parse the comma-separated domains param into a Set. */
+function parseActiveDomains(raw: string): Set<Domain> {
+  if (!raw) return new Set();
+  return new Set(raw.split(",").filter(Boolean) as Domain[]);
+}
+
+export function DomainFilter({ active }: { active: string }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const activeDomains = parseActiveDomains(active);
+  const isAll = activeDomains.size === 0;
+
+  function toggle(domain: Domain) {
+    const next = new Set(activeDomains);
+    if (next.has(domain)) next.delete(domain);
+    else next.add(domain);
+
+    const params = new URLSearchParams(searchParams.toString());
+    // Remove legacy category param
+    params.delete("category");
+    if (next.size === 0) params.delete("domains");
+    else params.set("domains", Array.from(next).join(","));
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  function selectAll() {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("domains");
+    params.delete("category");
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
   return (
     <div className="flex gap-1.5 flex-wrap">
-      {CATEGORIES.map((c) => (
-        <button
-          key={c.value}
-          onClick={() => update("category", c.value)}
-          className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-            active === c.value
-              ? "bg-zinc-700 text-zinc-50"
-              : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
-          }`}
-        >
-          {c.label}
-        </button>
-      ))}
+      {/* All pill */}
+      <button
+        onClick={selectAll}
+        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+          isAll
+            ? "bg-zinc-700 text-zinc-50"
+            : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+        }`}
+      >
+        All
+      </button>
+
+      {/* Domain pills */}
+      {DOMAINS.map((d) => {
+        const selected = activeDomains.has(d.value);
+        return (
+          <button
+            key={d.value}
+            onClick={() => toggle(d.value)}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              selected
+                ? "bg-zinc-700 text-zinc-50"
+                : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
+            }`}
+          >
+            <DomainIcon category={d.category} className="opacity-80" size={12} />
+            {d.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

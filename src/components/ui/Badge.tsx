@@ -3,9 +3,8 @@ import type { InsightCategory, InsightRarity } from "@/types/index";
 
 // ── Domain icons (inline SVGs, 14–15px) ──────────────────────────────────────
 
-function DomainIconSvg({ category, legendary }: { category: InsightCategory; legendary?: boolean }) {
+function DomainIconSvg({ category, legendary, size = 14 }: { category: InsightCategory; legendary?: boolean; size?: number }) {
   const stroke = legendary ? "#CA8A04" : "#52525B";
-  const size = 14;
   const shared = { width: size, height: size, viewBox: "0 0 16 16", fill: "none", stroke, strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
   switch (category) {
@@ -67,13 +66,33 @@ function DomainIconSvg({ category, legendary }: { category: InsightCategory; leg
   }
 }
 
-export function DomainIcon({ category, legendary, className }: { category: InsightCategory; legendary?: boolean; className?: string }) {
+export function DomainIcon({ category, legendary, className, size }: { category: InsightCategory; legendary?: boolean; className?: string; size?: number }) {
   return (
     <span
       className={cn("inline-flex items-center justify-center shrink-0", className)}
       style={{ background: "rgba(161,161,170,0.08)", borderRadius: 3, padding: 3 }}
     >
-      <DomainIconSvg category={category} legendary={legendary} />
+      <DomainIconSvg category={category} legendary={legendary} size={size} />
+    </span>
+  );
+}
+
+/** Render multiple domain icons side-by-side for multi-domain insights. */
+export function MultiDomainIcons({
+  domains,
+  legendary,
+  className,
+}: {
+  domains: InsightCategory[];
+  legendary?: boolean;
+  className?: string;
+}) {
+  if (domains.length === 0) return null;
+  return (
+    <span className={cn("inline-flex items-center gap-0.5", className)}>
+      {domains.map((d) => (
+        <DomainIcon key={d} category={d} legendary={legendary} />
+      ))}
     </span>
   );
 }

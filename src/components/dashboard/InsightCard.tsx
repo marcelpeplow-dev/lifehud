@@ -4,9 +4,10 @@ import { useState } from "react";
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow, parseISO } from "date-fns";
-import { RarityBadge, DomainIcon } from "@/components/ui/Badge";
+import { RarityBadge, MultiDomainIcons } from "@/components/ui/Badge";
 import { LegendaryMotif } from "@/components/ui/LegendaryMotif";
 import { createClient } from "@/lib/supabase/client";
+import { detectDomains } from "@/lib/insights/domains";
 import type { Insight, InsightCategory, InsightRarity } from "@/types/index";
 
 const RARITY_CSS_CLASS: Record<InsightRarity, string> = {
@@ -73,6 +74,7 @@ export function InsightCard({ insight }: InsightCardProps) {
   const [askLoading, setAskLoading] = useState(false);
   const rarity: InsightRarity = insight.rarity ?? "common";
   const category = insight.category as InsightCategory;
+  const domains = detectDomains(category, insight.title, insight.body);
   const btnStyle = RARITY_BUTTON_STYLE[rarity];
 
   if (dismissed) return null;
@@ -141,7 +143,7 @@ export function InsightCard({ insight }: InsightCardProps) {
       {/* Header */}
       <div className="flex items-center gap-2 mb-2">
         <RarityBadge rarity={rarity} />
-        <DomainIcon category={category} legendary={rarity === "legendary"} />
+        <MultiDomainIcons domains={domains} legendary={rarity === "legendary"} />
         <span className="text-xs text-zinc-500">{timeAgo}</span>
       </div>
 

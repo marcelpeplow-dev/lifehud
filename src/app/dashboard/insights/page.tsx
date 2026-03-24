@@ -2,54 +2,75 @@ import { Suspense } from "react";
 import { Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { InsightCard } from "@/components/dashboard/InsightCard";
-import { CategoryFilter, StatusFilter } from "@/components/insights/InsightFilters";
+import { DomainFilter, StatusFilter } from "@/components/insights/InsightFilters";
 import { GenerateButton } from "@/components/insights/GenerateButton";
 import { RevealSection } from "@/components/insights/RevealSection";
+import { detectDomains, type Domain, ALL_DOMAINS } from "@/lib/insights/domains";
 import type { Insight, InsightCategory, InsightRarity } from "@/types/index";
+import { redirect } from "next/navigation";
 
 const RARITY_RANK: Record<InsightRarity, number> = {
   legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4,
 };
-import { redirect } from "next/navigation";
 
-const VALID_CATEGORIES = new Set(["sleep", "fitness", "recovery", "correlation", "goal", "general", "wellbeing"]);
 const VALID_STATUSES = new Set(["active", "unread", "dismissed"]);
+
+/** Parse and validate the comma-separated domains param. */
+function parseDomains(raw: string | undefined): Domain[] {
+  if (!raw) return [];
+  return raw.split(",").filter((d) => ALL_DOMAINS.includes(d as Domain)) as Domain[];
+}
 
 export default async function InsightsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; status?: string }>;
+  searchParams: Promise<{ domains?: string; status?: string; category?: string }>;
 }) {
-  const { category: rawCat = "all", status: rawStatus = "active" } = await searchParams;
-  const category = VALID_CATEGORIES.has(rawCat) ? (rawCat as InsightCategory) : "all" as const;
+  const { domains: rawDomains, status: rawStatus = "active", category: legacyCat } = await searchParams;
   const status = VALID_STATUSES.has(rawStatus) ? rawStatus : "active";
+  const selectedDomains = parseDomains(rawDomains ?? (legacyCat && legacyCat !== "all" ? legacyCat : undefined));
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  // Fetch all insights for this status — domain filtering happens client-side
+  // because it requires text scanning
   let query = supabase
     .from("insights")
     .select("*")
     .eq("user_id", user.id)
     .order("date", { ascending: false })
     .order("priority", { ascending: false })
-    .limit(50);
+    .limit(100);
 
   // Status filter
   if (status === "active") query = query.eq("is_dismissed", false);
   else if (status === "unread") query = query.eq("is_dismissed", false).eq("is_read", false);
   else if (status === "dismissed") query = query.eq("is_dismissed", true);
 
-  // Category filter
-  if (category !== "all") query = query.eq("category", category);
-
   const { data } = await query;
-  const insights = ((data ?? []) as Insight[]).sort((a, b) => {
+  let insights = ((data ?? []) as Insight[]);
+
+  // Domain filtering: if specific domains selected, only keep insights
+  // that touch ALL of the selected domains
+  if (selectedDomains.length > 0) {
+    insights = insights.filter((ins) => {
+      const detected = detectDomains(
+        ins.category as InsightCategory,
+        ins.title,
+        ins.body,
+      );
+      return selectedDomains.every((d) => detected.includes(d));
+    });
+  }
+
+  // Sort: rarity first (legendary → common), then newest first
+  insights.sort((a, b) => {
     const ra = RARITY_RANK[a.rarity ?? "common"];
     const rb = RARITY_RANK[b.rarity ?? "common"];
     if (ra !== rb) return ra - rb;
-    return (b.priority ?? 0) - (a.priority ?? 0);
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   // Unread insights (for pack reveal prompt)
@@ -63,6 +84,8 @@ export default async function InsightsPage({
     .order("priority", { ascending: false })
     .limit(12);
   const unreadInsights = (unreadData ?? []) as Insight[];
+
+  const domainsParam = selectedDomains.join(",");
 
   return (
     <div className="space-y-6">
@@ -90,7 +113,7 @@ export default async function InsightsPage({
       {/* Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <Suspense>
-          <CategoryFilter active={category} />
+          <DomainFilter active={domainsParam} />
         </Suspense>
         <div className="sm:ml-auto">
           <Suspense>
@@ -112,12 +135,14 @@ export default async function InsightsPage({
             <Sparkles className="w-6 h-6 text-zinc-600" />
           </div>
           <p className="text-sm font-medium text-zinc-300 mb-1">
-            {status === "dismissed" ? "No dismissed insights" : "No insights yet"}
+            {status === "dismissed" ? "No dismissed insights" : selectedDomains.length > 0 ? "No matching insights" : "No insights yet"}
           </p>
           <p className="text-xs text-zinc-500 mb-5">
             {status === "dismissed"
               ? "Dismissed insights will appear here"
-              : "Generate your first AI coaching insight based on your data"}
+              : selectedDomains.length > 0
+                ? "Try selecting different domains or generate new insights"
+                : "Generate your first AI coaching insight based on your data"}
           </p>
           {status !== "dismissed" && <GenerateButton />}
         </div>
