@@ -40,6 +40,16 @@ function DomainIconSvg({ category, legendary }: { category: InsightCategory; leg
           <path d="M3 13C5 11 7 9 13 3" />
         </svg>
       );
+    case "chess":
+      // Crossed swords
+      return (
+        <svg {...shared}>
+          <line x1="3" y1="3" x2="13" y2="13" />
+          <polyline points="10,3 13,3 13,6" />
+          <line x1="13" y1="3" x2="3" y2="13" />
+          <polyline points="3,10 3,13 6,13" />
+        </svg>
+      );
     case "correlation":
       // Two overlapping circles
       return (

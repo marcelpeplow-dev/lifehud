@@ -5,6 +5,7 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { detectPatterns } from "@/lib/analysis/patterns";
 import { detectBasicStats } from "@/lib/analysis/patterns";
 import { generateInsights, generateDailyAction } from "@/lib/ai/generate";
+import type { ChessContext } from "@/lib/ai/generate";
 import { average } from "@/lib/utils/metrics";
 import type { SleepRecord, Workout, DailyMetrics, CheckIn, ChessGame, InsightCategory } from "@/types/index";
 
@@ -82,6 +83,41 @@ export async function POST() {
       ? lastNight.duration_minutes / 60
       : null;
 
+    // Build chess context if chess data exists
+    let chessContext: ChessContext | null = null;
+    if (chessGames.length > 0) {
+      const fourteenDaysAgo = format(subDays(today, 14), "yyyy-MM-dd");
+      const recent14 = chessGames.filter((g) => g.date >= fourteenDaysAgo);
+      const latestByTc = (tc: string) => {
+        const tcGames = chessGames.filter((g) => g.time_class === tc);
+        return tcGames.length > 0 ? tcGames[tcGames.length - 1].player_rating : null;
+      };
+      // Rating trend: compare first half vs second half
+      const mid = Math.floor(chessGames.length / 2);
+      const firstHalfAvg = chessGames.length >= 4
+        ? chessGames.slice(0, mid).reduce((s, g) => s + g.player_rating, 0) / mid
+        : 0;
+      const secondHalfAvg = chessGames.length >= 4
+        ? chessGames.slice(mid).reduce((s, g) => s + g.player_rating, 0) / (chessGames.length - mid)
+        : 0;
+      const ratingDiff = secondHalfAvg - firstHalfAvg;
+      const ratingTrend: "up" | "down" | "flat" = chessGames.length < 4 ? "flat" : ratingDiff > 10 ? "up" : ratingDiff < -10 ? "down" : "flat";
+
+      const uniqueDays = new Set(chessGames.map((g) => g.date)).size;
+      const recentWins = recent14.filter((g) => g.result === "win").length;
+
+      chessContext = {
+        gamesCount: chessGames.length,
+        gamesPerDay: uniqueDays > 0 ? chessGames.length / uniqueDays : 0,
+        rapidRating: latestByTc("rapid"),
+        blitzRating: latestByTc("blitz"),
+        bulletRating: latestByTc("bullet"),
+        ratingTrend,
+        recentWinRate: recent14.length > 0 ? recentWins / recent14.length : null,
+        recentGames: recent14.length,
+      };
+    }
+
     const context = {
       nightCount: sleepRecords.length,
       workoutCount: workouts.length,
@@ -92,6 +128,7 @@ export async function POST() {
       avgMood,
       avgEnergy,
       avgStress,
+      chess: chessContext,
     };
 
     // Generate insights via Claude
