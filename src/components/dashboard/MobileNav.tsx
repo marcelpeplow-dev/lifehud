@@ -7,6 +7,7 @@ import {
   Moon,
   Dumbbell,
   Sparkles,
+  Swords,
   Target,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Overview", href: "/dashboard", icon: Home, exact: true },
   { label: "Sleep", href: "/dashboard/sleep", icon: Moon },
   { label: "Fitness", href: "/dashboard/fitness", icon: Dumbbell },
+  { label: "Chess", href: "/dashboard/chess", icon: Swords },
   { label: "Insights", href: "/dashboard/insights", icon: Sparkles },
   { label: "Goals", href: "/dashboard/goals", icon: Target },
 ];

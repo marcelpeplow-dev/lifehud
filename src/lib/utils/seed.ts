@@ -434,6 +434,157 @@ function generateGoals(userId: string) {
   ];
 }
 
+// ─── CHESS GAMES ─────────────────────────────────────────────────────────────
+
+const OPENINGS = [
+  "Italian Game", "Sicilian Defense", "French Defense", "Ruy Lopez",
+  "Queens Gambit", "Kings Indian", "English Opening", "Caro Kann",
+  "Scandinavian Defense", "Pirc Defense", "Dutch Defense", "London System",
+];
+
+const RESULT_DETAILS_WIN = ["checkmate", "resignation", "timeout"];
+const RESULT_DETAILS_LOSS = ["checkmated", "resignation", "timeout"];
+const RESULT_DETAILS_DRAW = ["stalemate", "draw by agreement", "draw by repetition"];
+
+type ChessGameInsert = {
+  user_id: string;
+  game_id: string;
+  played_at: string;
+  date: string;
+  time_class: string;
+  time_control: string;
+  player_color: string;
+  player_rating: number;
+  opponent_rating: number;
+  result: string;
+  result_detail: string;
+  accuracy: number | null;
+  num_moves: number;
+  duration_seconds: number;
+  opening_name: string;
+  raw_pgn: string | null;
+};
+
+function generateChessGames(
+  userId: string,
+  sleepByDate: Map<string, number>,
+  workoutDates: Set<string>,
+): ChessGameInsert[] {
+  const games: ChessGameInsert[] = [];
+  const today = new Date();
+
+  // Rating trackers per time class
+  const ratings: Record<string, number> = {
+    rapid: 1100 + randInt(-10, 10),
+    blitz: 1080 + randInt(-10, 10),
+    bullet: 1050 + randInt(-10, 10),
+  };
+
+  // Generate 60-90 games over 30 days
+  const totalGames = randInt(60, 90);
+  const gamesPerDay: number[] = new Array(30).fill(0);
+
+  // Distribute games across days (2-3 per day on average, some days 0)
+  for (let i = 0; i < totalGames; i++) {
+    const day = Math.floor(Math.random() * 30);
+    gamesPerDay[day]++;
+  }
+
+  let gameCounter = 0;
+
+  for (let daysAgo = 30; daysAgo >= 1; daysAgo--) {
+    const date = subDays(today, daysAgo);
+    const dateStr = format(date, "yyyy-MM-dd");
+    const dayIndex = 30 - daysAgo;
+    const numGames = gamesPerDay[dayIndex];
+
+    if (numGames === 0) continue;
+
+    // Check if this was a good sleep day and workout day
+    const sleepMins = sleepByDate.get(dateStr) ?? 420;
+    const goodSleep = sleepMins >= 420;
+    const isWorkoutDay = workoutDates.has(dateStr);
+
+    // Slight performance boost on good sleep/workout days
+    const performanceBoost = (goodSleep ? 0.06 : -0.04) + (isWorkoutDay ? 0.04 : 0);
+
+    for (let g = 0; g < numGames; g++) {
+      gameCounter++;
+
+      // Pick time class: 40% rapid, 40% blitz, 20% bullet
+      const tcRoll = Math.random();
+      const timeClass = tcRoll < 0.4 ? "rapid" : tcRoll < 0.8 ? "blitz" : "bullet";
+      const timeControl = timeClass === "rapid" ? "600" : timeClass === "blitz" ? "180+2" : "60";
+
+      // Game time: spread across day hours
+      const hour = randInt(7, 23);
+      const minute = randInt(0, 59);
+      const playedAt = new Date(date);
+      playedAt.setHours(hour, minute, randInt(0, 59));
+
+      // Time-of-day performance: slightly better morning/afternoon
+      const todBoost = hour >= 6 && hour < 14 ? 0.04 : hour >= 22 ? -0.06 : 0;
+
+      // Base win rate ~52% + boosts
+      const winProb = 0.52 + performanceBoost + todBoost;
+      const roll = Math.random();
+      const result: "win" | "loss" | "draw" = roll < winProb ? "win" : roll < winProb + 0.44 ? "loss" : "draw";
+
+      // Rating change
+      const ratingDelta = result === "win" ? randInt(5, 15) : result === "loss" ? -randInt(4, 12) : randInt(-2, 2);
+      // Add slight upward trend
+      const trendBoost = result === "win" ? 1 : 0;
+      ratings[timeClass] = Math.max(800, ratings[timeClass] + ratingDelta + trendBoost);
+
+      const playerRating = ratings[timeClass];
+      const opponentRating = playerRating + randInt(-150, 150);
+
+      const resultDetail = result === "win"
+        ? RESULT_DETAILS_WIN[Math.floor(Math.random() * RESULT_DETAILS_WIN.length)]
+        : result === "loss"
+        ? RESULT_DETAILS_LOSS[Math.floor(Math.random() * RESULT_DETAILS_LOSS.length)]
+        : RESULT_DETAILS_DRAW[Math.floor(Math.random() * RESULT_DETAILS_DRAW.length)];
+
+      // Accuracy: available ~60% of games, range 55-90
+      const hasAccuracy = Math.random() < 0.6;
+      let accuracy: number | null = null;
+      if (hasAccuracy) {
+        const baseAcc = rand(55, 85);
+        const sleepAccBoost = goodSleep ? rand(2, 5) : 0;
+        accuracy = Math.min(Math.round((baseAcc + sleepAccBoost) * 10) / 10, 98);
+      }
+
+      const numMoves = randInt(20, 60);
+      const baseDuration = timeClass === "rapid" ? 600 : timeClass === "blitz" ? 180 : 60;
+      const durationSeconds = Math.round(baseDuration * rand(0.5, 1.8));
+
+      const opening = OPENINGS[Math.floor(Math.random() * OPENINGS.length)];
+      const playerColor = Math.random() < 0.5 ? "white" : "black";
+
+      games.push({
+        user_id: userId,
+        game_id: `https://www.chess.com/game/live/seed-${gameCounter}`,
+        played_at: playedAt.toISOString(),
+        date: dateStr,
+        time_class: timeClass,
+        time_control: timeControl,
+        player_color: playerColor,
+        player_rating: playerRating,
+        opponent_rating: opponentRating,
+        result,
+        result_detail: resultDetail,
+        accuracy,
+        num_moves: numMoves,
+        duration_seconds: durationSeconds,
+        opening_name: opening,
+        raw_pgn: null,
+      });
+    }
+  }
+
+  return games;
+}
+
 // ─── MAIN SEED FUNCTION ───────────────────────────────────────────────────────
 
 export async function seedUserData(
@@ -446,6 +597,7 @@ export async function seedUserData(
   insights: number;
   goals: number;
   checkins: number;
+  chess: number;
 }> {
   // Clear existing seed data for this user to make it re-runnable
   await Promise.all([
@@ -457,8 +609,9 @@ export async function seedUserData(
       .from("insights")
       .delete()
       .eq("user_id", userId)
-      .in("category", ["sleep", "fitness", "recovery", "correlation", "general", "wellbeing"]),
+      .in("category", ["sleep", "fitness", "recovery", "correlation", "general", "wellbeing", "chess"]),
     supabase.from("daily_checkins").delete().eq("user_id", userId),
+    supabase.from("chess_games").delete().eq("user_id", userId),
   ]);
 
   const sleepRecords = generateSleepRecords(userId);
@@ -469,8 +622,9 @@ export async function seedUserData(
   const goalRecords = generateGoals(userId);
   const sleepByDate = new Map(sleepRecords.map((s) => [s.date as string, s.duration_minutes as number]));
   const checkInRecords = generateCheckIns(userId, sleepByDate, workoutDateSet);
+  const chessRecords = generateChessGames(userId, sleepByDate, workoutDateSet);
 
-  const [sleepResult, workoutResult, metricsResult, insightsResult, goalsResult, checkInsResult] =
+  const [sleepResult, workoutResult, metricsResult, insightsResult, goalsResult, checkInsResult, chessResult] =
     await Promise.all([
       supabase.from("sleep_records").insert(sleepRecords),
       supabase.from("workouts").insert(workoutRecords),
@@ -478,6 +632,7 @@ export async function seedUserData(
       supabase.from("insights").insert(insightRecords),
       supabase.from("goals").insert(goalRecords),
       supabase.from("daily_checkins").insert(checkInRecords),
+      supabase.from("chess_games").insert(chessRecords),
     ]);
 
   if (sleepResult.error) throw new Error(`Sleep insert: ${sleepResult.error.message}`);
@@ -486,6 +641,13 @@ export async function seedUserData(
   if (insightsResult.error) throw new Error(`Insights insert: ${insightsResult.error.message}`);
   if (goalsResult.error) throw new Error(`Goals insert: ${goalsResult.error.message}`);
   if (checkInsResult.error) throw new Error(`Check-ins insert: ${checkInsResult.error.message}`);
+  if (chessResult.error) throw new Error(`Chess insert: ${chessResult.error.message}`);
+
+  // Set chess_username for demo profile
+  await supabase
+    .from("profiles")
+    .update({ chess_username: "lifehud_demo", last_chess_sync: new Date().toISOString() })
+    .eq("id", userId);
 
   return {
     sleep: sleepRecords.length,
@@ -494,5 +656,6 @@ export async function seedUserData(
     insights: insightRecords.length,
     goals: goalRecords.length,
     checkins: checkInRecords.length,
+    chess: chessRecords.length,
   };
 }
