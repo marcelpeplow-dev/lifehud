@@ -6,7 +6,7 @@ import { detectPatterns } from "@/lib/analysis/patterns";
 import { detectBasicStats } from "@/lib/analysis/patterns";
 import { generateInsights, generateDailyAction } from "@/lib/ai/generate";
 import { average } from "@/lib/utils/metrics";
-import type { SleepRecord, Workout, DailyMetrics, CheckIn, InsightCategory } from "@/types/index";
+import type { SleepRecord, Workout, DailyMetrics, CheckIn, ChessGame, InsightCategory } from "@/types/index";
 
 export const GET = POST;
 
@@ -38,21 +38,24 @@ export async function POST() {
       { data: workoutData },
       { data: metricsData },
       { data: checkInData },
+      { data: chessData },
     ] = await Promise.all([
       supabase.from("sleep_records").select("*").eq("user_id", user.id).gte("date", thirtyDaysAgo).order("date", { ascending: true }),
       supabase.from("workouts").select("*").eq("user_id", user.id).gte("date", thirtyDaysAgo).order("date", { ascending: true }),
       supabase.from("daily_metrics").select("*").eq("user_id", user.id).gte("date", thirtyDaysAgo).order("date", { ascending: true }),
       supabase.from("daily_checkins").select("*").eq("user_id", user.id).gte("date", thirtyDaysAgo).order("date", { ascending: true }),
+      supabase.from("chess_games").select("*").eq("user_id", user.id).gte("date", thirtyDaysAgo).order("played_at", { ascending: true }),
     ]);
 
     const sleepRecords = (sleepData ?? []) as SleepRecord[];
     const workouts = (workoutData ?? []) as Workout[];
     const dailyMetrics = (metricsData ?? []) as DailyMetrics[];
     const checkIns = (checkInData ?? []) as CheckIn[];
+    const chessGames = (chessData ?? []) as ChessGame[];
 
     // Detect patterns (cross-domain) and basic stats
-    const crossDomainPatterns = detectPatterns({ sleepRecords, workouts, dailyMetrics, checkIns, today });
-    const basicStats = detectBasicStats({ sleepRecords, workouts, dailyMetrics, checkIns, today });
+    const crossDomainPatterns = detectPatterns({ sleepRecords, workouts, dailyMetrics, checkIns, chessGames, today });
+    const basicStats = detectBasicStats({ sleepRecords, workouts, dailyMetrics, checkIns, chessGames, today });
 
     if (crossDomainPatterns.length === 0 && basicStats.length === 0) {
       return NextResponse.json({ message: "Not enough data for pattern detection", generated: 0 });
