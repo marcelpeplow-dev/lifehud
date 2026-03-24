@@ -1,5 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
-import type { DetectedPattern, RawInsight } from "@/types/index";
+import type { RawInsight } from "@/types/index";
+import type { ScoredPattern } from "@/lib/analysis/pattern-scorer";
+import type { UserDataBundle } from "@/lib/analysis/data-bundle";
+import type { Domain } from "@/lib/analysis/domains";
+import { average } from "@/lib/utils/metrics";
 
 const MODEL = "claude-sonnet-4-6";
 
@@ -61,65 +65,72 @@ Rules:
 
 Return ONLY the message text. No quotes, no prefix, no JSON.`;
 
-export interface ChessContext {
-  gamesCount: number;
-  gamesPerDay: number;
-  rapidRating: number | null;
-  blitzRating: number | null;
-  bulletRating: number | null;
-  ratingTrend: "up" | "down" | "flat";
-  recentWinRate: number | null; // last 14 days
-  recentGames: number;         // last 14 days
-}
-
+/**
+ * Generate insights from scored patterns using the new pipeline.
+ */
 export async function generateInsights(
-  patterns: DetectedPattern[],
-  basicStats: DetectedPattern[],
-  context: {
-    nightCount: number;
-    workoutCount: number;
-    avgSleepHours: number | null;
-    avgDeepRemPct: number | null;
-    lastNightSleepHours: number | null;
-    checkInCount: number;
-    avgMood: number | null;
-    avgEnergy: number | null;
-    avgStress: number | null;
-    chess: ChessContext | null;
-  }
+  patterns: ScoredPattern[],
+  bundle: UserDataBundle,
+  activeDomains: Set<Domain>,
 ): Promise<RawInsight[]> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY is not set");
 
   const client = new Anthropic({ apiKey });
 
+  // Build context summary from the bundle
+  const avgSleepMinutes = average(bundle.sleepRecords.map((s) => s.duration_minutes));
+  const lastNight = bundle.sleepRecords.at(-1);
+  const avgMood = bundle.checkins.length > 0 ? average(bundle.checkins.map((c) => c.mood)) : null;
+  const avgEnergy = bundle.checkins.length > 0 ? average(bundle.checkins.map((c) => c.energy)) : null;
+  const avgStress = bundle.checkins.length > 0 ? average(bundle.checkins.map((c) => c.stress)) : null;
+
+  const sleepWithStages = bundle.sleepRecords.filter(
+    (s) => s.duration_minutes && s.duration_minutes > 0 &&
+      ((s.deep_sleep_minutes ?? 0) + (s.rem_sleep_minutes ?? 0)) > 0,
+  );
+  const avgDeepRemPct = sleepWithStages.length > 0
+    ? average(sleepWithStages.map((s) =>
+        ((s.deep_sleep_minutes ?? 0) + (s.rem_sleep_minutes ?? 0)) / s.duration_minutes!,
+      ))
+    : null;
+
   const contextLines = [
-    `30-day summary: ${context.nightCount} nights tracked, ${context.workoutCount} workouts`,
-    `Avg sleep: ${context.avgSleepHours != null ? context.avgSleepHours.toFixed(1) + "h" : "unknown"}${context.avgDeepRemPct != null ? ` (${Math.round(context.avgDeepRemPct * 100)}% deep+REM)` : ""}`,
-    context.lastNightSleepHours != null
-      ? `Last night: ${context.lastNightSleepHours.toFixed(1)}h`
+    `The user has data for these domains: ${Array.from(activeDomains).join(", ")}.`,
+    `You are receiving the top ${patterns.length} patterns selected from the detector pipeline.`,
+    `These are the most significant, novel, and interesting patterns — prioritize cross-domain insights as they are the most valuable.`,
+    `Do not generate insights about domains the user doesn't have data for.`,
+    "",
+    `30-day summary: ${bundle.sleepRecords.length} nights tracked, ${bundle.workouts.length} workouts`,
+    avgSleepMinutes != null
+      ? `Avg sleep: ${(avgSleepMinutes / 60).toFixed(1)}h${avgDeepRemPct != null ? ` (${Math.round(avgDeepRemPct * 100)}% deep+REM)` : ""}`
       : null,
-    context.checkInCount > 0
-      ? `Check-ins (${context.checkInCount}): avg mood ${context.avgMood?.toFixed(1)}/10, energy ${context.avgEnergy?.toFixed(1)}/10, stress ${context.avgStress?.toFixed(1)}/10`
-      : "No check-in data.",
-    context.chess
-      ? `Chess.com: ${context.chess.gamesCount} games (${context.chess.gamesPerDay.toFixed(1)}/day), ratings: rapid ${context.chess.rapidRating ?? "—"}, blitz ${context.chess.blitzRating ?? "—"}, bullet ${context.chess.bulletRating ?? "—"}. Trend: ${context.chess.ratingTrend}. Last 14 days: ${context.chess.recentGames} games, ${context.chess.recentWinRate !== null ? Math.round(context.chess.recentWinRate * 100) + "%" : "—"} win rate.`
+    lastNight?.duration_minutes != null
+      ? `Last night: ${(lastNight.duration_minutes / 60).toFixed(1)}h`
+      : null,
+    bundle.checkins.length > 0
+      ? `Check-ins (${bundle.checkins.length}): avg mood ${avgMood?.toFixed(1)}/10, energy ${avgEnergy?.toFixed(1)}/10, stress ${avgStress?.toFixed(1)}/10`
+      : null,
+    bundle.chessGames.length > 0
+      ? buildChessContextLine(bundle)
       : null,
   ]
     .filter(Boolean)
-    .join(". ");
+    .join("\n");
 
-  const allPatterns = [
-    ...patterns.map((p) => ({ ...p, tier: "cross_domain" })),
-    ...basicStats.map((p) => ({ ...p, tier: "basic" })),
-  ];
+  // Format patterns with their scores for the prompt
+  const patternLines = patterns.map((p, i) => {
+    const domainTag = p.domains.join("+");
+    const categoryTag = p.domains.length > 1 ? "CROSS-DOMAIN" : "SINGLE-DOMAIN";
+    return `${i + 1}. [${categoryTag}][${domainTag}][sig=${p.significance.toFixed(2)}, score=${p.finalScore.toFixed(2)}] ${p.description}\n   Data: ${JSON.stringify(p.data)}`;
+  }).join("\n");
 
-  const userMessage = `Context: ${contextLines}
+  const userMessage = `${contextLines}
 
-Patterns (${allPatterns.length} total):
-${allPatterns.map((p, i) => `${i + 1}. [${p.significance.toUpperCase()}][${p.tier}] ${p.description}\n   Data: ${JSON.stringify(p.data)}`).join("\n")}
+Patterns (${patterns.length} selected):
+${patternLines}
 
-Generate insights for ALL patterns above. Cross-domain patterns should be Rare/Epic/Legendary. Basic/stat patterns should be Common/Uncommon. Include 2-4 cross-domain insights and 2-3 common stat summaries.`.trim();
+Generate insights for the patterns above. Cross-domain patterns should be Rare/Epic/Legendary. Single-domain patterns should be Common/Uncommon. Include 2-4 cross-domain insights and 1-2 single-domain insights.`.trim();
 
   const message = await client.messages.create({
     model: MODEL,
@@ -144,6 +155,25 @@ Generate insights for ALL patterns above. Cross-domain patterns should be Rare/E
     confidence: (validConfidences.has(String(item.confidence)) ? item.confidence : "medium") as "high" | "medium" | "speculative",
     rarity: (validRarities.has(String(item.rarity)) ? item.rarity : "common") as import("@/types/index").InsightRarity,
   })) as RawInsight[];
+}
+
+function buildChessContextLine(bundle: UserDataBundle): string {
+  const games = bundle.chessGames;
+  const uniqueDays = new Set(games.map((g) => g.date)).size;
+  const gamesPerDay = uniqueDays > 0 ? games.length / uniqueDays : 0;
+
+  const latestByTc = (tc: string) => {
+    const tcGames = games.filter((g) => g.time_class === tc);
+    return tcGames.length > 0 ? tcGames[tcGames.length - 1].player_rating : null;
+  };
+
+  const recent14Cutoff = new Date();
+  recent14Cutoff.setDate(recent14Cutoff.getDate() - 14);
+  const recent14 = games.filter((g) => new Date(g.played_at) >= recent14Cutoff);
+  const recentWins = recent14.filter((g) => g.result === "win").length;
+  const recentWinRate = recent14.length > 0 ? Math.round((recentWins / recent14.length) * 100) : null;
+
+  return `Chess.com: ${games.length} games (${gamesPerDay.toFixed(1)}/day), ratings: rapid ${latestByTc("rapid") ?? "—"}, blitz ${latestByTc("blitz") ?? "—"}, bullet ${latestByTc("bullet") ?? "—"}. Last 14 days: ${recent14.length} games, ${recentWinRate !== null ? recentWinRate + "%" : "—"} win rate.`;
 }
 
 export async function generateDailyAction(context: {
