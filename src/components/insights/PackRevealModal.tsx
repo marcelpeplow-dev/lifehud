@@ -3,9 +3,10 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Volume2, VolumeX, Share2, Download } from "lucide-react";
-import { RarityBadge } from "@/components/ui/Badge";
+import { RarityBadge, DomainIcon } from "@/components/ui/Badge";
+import { LegendaryMotif } from "@/components/ui/LegendaryMotif";
 import { useRevealSound } from "./useRevealSound";
-import type { Insight, InsightRarity } from "@/types/index";
+import type { Insight, InsightCategory, InsightRarity } from "@/types/index";
 
 // ── Rarity accent colours (for particles + share image) ─────────────────────
 const RARITY_ACCENT: Record<InsightRarity, string> = {
@@ -16,12 +17,12 @@ const RARITY_ACCENT: Record<InsightRarity, string> = {
   legendary: "#fde68a",
 };
 
-const RARITY_CARD_BG: Record<InsightRarity, string> = {
-  common:    "border-zinc-600 bg-zinc-800/60",
-  uncommon:  "border-green-700 bg-green-950/40",
-  rare:      "border-blue-700 bg-blue-950/40",
-  epic:      "border-violet-600 bg-violet-950/40",
-  legendary: "border-amber-500 bg-amber-950/40",
+const RARITY_CARD_CLASS: Record<InsightRarity, string> = {
+  common:    "rarity-common",
+  uncommon:  "rarity-uncommon",
+  rare:      "rarity-rare",
+  epic:      "rarity-epic",
+  legendary: "rarity-legendary",
 };
 
 // ── Particle burst component ──────────────────────────────────────────────────
@@ -115,13 +116,14 @@ function FlipCard({ insight, index, isRevealed, onReveal }: FlipCardProps) {
 
         {/* Card front */}
         <div
-          className={`absolute inset-0 rounded-xl border-2 ${RARITY_CARD_BG[rarity]} p-4 flex flex-col overflow-hidden`}
+          className={`absolute inset-0 rounded-xl ${RARITY_CARD_CLASS[rarity]} bg-zinc-900 p-4 flex flex-col`}
           style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
         >
           <ParticleBurst color={accentColor} active={isRevealed && isEpicOrLegendary} />
 
-          <div className="flex items-start justify-between mb-2">
+          <div className="flex items-center gap-1.5 mb-2">
             <RarityBadge rarity={rarity} />
+            <DomainIcon category={insight.category as InsightCategory} legendary={rarity === "legendary"} />
           </div>
 
           <p className="text-sm font-semibold text-zinc-50 mb-2 leading-snug line-clamp-2">
@@ -133,9 +135,7 @@ function FlipCard({ insight, index, isRevealed, onReveal }: FlipCardProps) {
           </p>
 
           {rarity === "legendary" && (
-            <div className="mt-2 pt-2 border-t border-amber-800/40">
-              <span className="text-xs text-amber-300/70 font-medium">✦ Legendary find</span>
-            </div>
+            <LegendaryMotif category={insight.category as InsightCategory} />
           )}
         </div>
       </motion.div>
@@ -143,16 +143,35 @@ function FlipCard({ insight, index, isRevealed, onReveal }: FlipCardProps) {
   );
 }
 
-// ── Share image via Canvas API ────────────────────────────────────────────────
-async function generateShareImage(insights: Insight[]): Promise<string> {
-  const W = 900;
-  const cardW = 200;
-  const cardH = 220;
-  const gap = 16;
-  const paddingX = 40;
-  const topPad = 80;
-  const bottomPad = 80;
-  const H = topPad + cardH + bottomPad;
+// ── Share image helpers ───────────────────────────────────────────────────────
+
+const RARITY_ORDER: InsightRarity[] = ["legendary", "epic", "rare", "uncommon", "common"];
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, lineHeight: number, maxLines: number): string[] {
+  const words = text.split(" ");
+  const lines: string[] = [];
+  let current = "";
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word;
+    if (ctx.measureText(test).width > maxWidth && current) {
+      lines.push(current);
+      current = word;
+      if (lines.length >= maxLines) break;
+    } else {
+      current = test;
+    }
+  }
+  if (current && lines.length < maxLines) lines.push(current);
+  return lines;
+}
+
+// Story format (9:16) — vertical list with rarity badge left, title right
+async function generateStoryImage(insights: Insight[]): Promise<string> {
+  const W = 380;
+  const H = Math.round(W * (16 / 9)); // 675
+  const pad = 24;
+  const rowH = 52;
+  const rowGap = 8;
 
   const canvas = document.createElement("canvas");
   canvas.width = W;
@@ -160,91 +179,198 @@ async function generateShareImage(insights: Insight[]): Promise<string> {
   const c = canvas.getContext("2d")!;
 
   // Background
-  c.fillStyle = "#09090b";
+  c.fillStyle = "#09090B";
   c.fillRect(0, 0, W, H);
 
-  // Logo
+  // Header
+  c.fillStyle = "#10b981";
+  c.font = "bold 16px system-ui, sans-serif";
+  c.fillText("Life HUD", pad, 40);
+
+  c.fillStyle = "#a1a1aa";
+  c.font = "13px system-ui, sans-serif";
+  c.fillText("Your weekly health insights", pad, 62);
+
+  // Hero: best rarity count
+  const counts = { legendary: 0, epic: 0, rare: 0, uncommon: 0, common: 0 } as Record<InsightRarity, number>;
+  insights.forEach((i) => { counts[i.rarity ?? "common"]++; });
+  const bestRarity = RARITY_ORDER.find((r) => counts[r] > 0) ?? "common";
+  const bestCount = counts[bestRarity];
+
+  c.fillStyle = RARITY_ACCENT[bestRarity];
+  c.font = "bold 28px system-ui, sans-serif";
+  const heroText = `${bestCount} ${bestRarity.charAt(0).toUpperCase() + bestRarity.slice(1)} insight${bestCount !== 1 ? "s" : ""}`;
+  c.fillText(heroText, pad, 110);
+
+  // Insight rows
+  const startY = 140;
+  const sorted = [...insights].sort((a, b) => {
+    const ai = RARITY_ORDER.indexOf(a.rarity ?? "common");
+    const bi = RARITY_ORDER.indexOf(b.rarity ?? "common");
+    return ai - bi;
+  });
+
+  sorted.forEach((insight, idx) => {
+    const rarity = insight.rarity ?? "common";
+    const y = startY + idx * (rowH + rowGap);
+    if (y + rowH > H - 60) return; // don't overflow
+
+    // Row background
+    c.beginPath();
+    c.roundRect(pad, y, W - pad * 2, rowH, 8);
+    c.fillStyle = "#18181B";
+    c.fill();
+
+    // Rarity badge
+    c.fillStyle = RARITY_ACCENT[rarity];
+    c.font = "bold 9px system-ui, sans-serif";
+    const badgeText = rarity.toUpperCase();
+    const badgeW = c.measureText(badgeText).width + 12;
+    c.beginPath();
+    c.roundRect(pad + 10, y + 10, badgeW, 16, 4);
+    c.fillStyle = rarity === "legendary" ? "rgba(202,138,4,0.2)" : rarity === "epic" ? "rgba(139,92,246,0.2)" : rarity === "rare" ? "rgba(59,130,246,0.2)" : rarity === "uncommon" ? "rgba(34,197,94,0.2)" : "rgba(113,113,122,0.2)";
+    c.fill();
+    c.fillStyle = RARITY_ACCENT[rarity];
+    c.font = "bold 9px system-ui, sans-serif";
+    c.fillText(badgeText, pad + 16, y + 22);
+
+    // Title (right of badge)
+    c.fillStyle = "#fafafa";
+    c.font = "12px system-ui, sans-serif";
+    const titleX = pad + 16 + badgeW + 8;
+    const maxTitleW = W - pad * 2 - titleX + pad - 10;
+    const lines = wrapText(c, insight.title, maxTitleW, 14, 2);
+    lines.forEach((line, li) => {
+      c.fillText(line, titleX, y + 18 + li * 14);
+    });
+  });
+
+  // Footer
+  c.fillStyle = "#52525b";
+  c.font = "11px system-ui, sans-serif";
+  c.fillText("AI-powered self-improvement", pad, H - 20);
+
+  c.fillStyle = "#10b981";
+  c.font = "11px system-ui, sans-serif";
+  c.textAlign = "right";
+  c.fillText("lifehud.vercel.app", W - pad, H - 20);
+  c.textAlign = "left";
+
+  return canvas.toDataURL("image/png");
+}
+
+// Hero Pull format (landscape, best insight large + rest small)
+async function generateHeroImage(insights: Insight[]): Promise<string> {
+  const W = 900;
+  const H = 500;
+  const pad = 40;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const c = canvas.getContext("2d")!;
+
+  c.fillStyle = "#09090B";
+  c.fillRect(0, 0, W, H);
+
+  // Header
   c.fillStyle = "#10b981";
   c.font = "bold 18px system-ui, sans-serif";
-  c.fillText("Life HUD", paddingX, 38);
+  c.fillText("Life HUD", pad, 38);
 
-  // Date
   const dateStr = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   c.fillStyle = "#71717a";
   c.font = "13px system-ui, sans-serif";
   c.textAlign = "right";
-  c.fillText(dateStr, W - paddingX, 38);
+  c.fillText(dateStr, W - pad, 38);
   c.textAlign = "left";
 
-  // Rarity counts
-  const counts = { legendary: 0, epic: 0, rare: 0, uncommon: 0, common: 0 } as Record<InsightRarity, number>;
-  insights.forEach((i) => { const r = i.rarity ?? "common"; counts[r]++; });
-  const summaryParts = (["legendary", "epic", "rare", "uncommon", "common"] as InsightRarity[])
-    .filter((r) => counts[r] > 0)
-    .map((r) => `${counts[r]} ${r}`);
-  c.fillStyle = "#a1a1aa";
-  c.font = "12px system-ui, sans-serif";
-  c.fillText(summaryParts.join(" · "), paddingX, H - 28);
-
-  // CTA
-  const cta = "What's hiding in your data? → lifehud.vercel.app";
-  c.fillStyle = "#52525b";
-  c.font = "12px system-ui, sans-serif";
-  c.textAlign = "right";
-  c.fillText(cta, W - paddingX, H - 28);
-  c.textAlign = "left";
-
-  // Cards
-  const totalW = insights.length * cardW + (insights.length - 1) * gap;
-  const startX = (W - totalW) / 2;
-
-  insights.forEach((insight, idx) => {
-    const rarity: InsightRarity = insight.rarity ?? "common";
-    const x = startX + idx * (cardW + gap);
-    const y = topPad;
-
-    // Card background
-    const bgColor = {
-      common: "#27272a", uncommon: "#052e16", rare: "#0c1a2e",
-      epic: "#1a0d2e", legendary: "#1c0f00",
-    }[rarity];
-    const borderColor = RARITY_ACCENT[rarity];
-
-    // Rounded rect
-    c.beginPath();
-    c.roundRect(x, y, cardW, cardH, 12);
-    c.fillStyle = bgColor;
-    c.fill();
-    c.strokeStyle = borderColor;
-    c.lineWidth = 2;
-    c.stroke();
-
-    // Rarity label
-    c.fillStyle = RARITY_ACCENT[rarity];
-    c.font = "bold 10px system-ui, sans-serif";
-    c.fillText(rarity.toUpperCase(), x + 12, y + 22);
-
-    // Title
-    c.fillStyle = "#fafafa";
-    c.font = "bold 11px system-ui, sans-serif";
-    const words = insight.title.split(" ");
-    let line = "";
-    let lineY = y + 46;
-    for (const word of words) {
-      const test = line ? `${line} ${word}` : word;
-      if (c.measureText(test).width > cardW - 24) {
-        c.fillText(line, x + 12, lineY);
-        line = word;
-        lineY += 16;
-        if (lineY > y + 80) break;
-      } else {
-        line = test;
-      }
-    }
-    if (line) c.fillText(line, x + 12, lineY);
+  // Sort by rarity
+  const sorted = [...insights].sort((a, b) => {
+    return RARITY_ORDER.indexOf(a.rarity ?? "common") - RARITY_ORDER.indexOf(b.rarity ?? "common");
   });
 
+  const hero = sorted[0];
+  const rest = sorted.slice(1);
+  const heroRarity = hero.rarity ?? "common";
+
+  // Hero card (large, centered top)
+  const heroW = W - pad * 2;
+  const heroH = 160;
+  const heroY = 70;
+  c.beginPath();
+  c.roundRect(pad, heroY, heroW, heroH, 12);
+  c.fillStyle = "#18181B";
+  c.fill();
+  c.strokeStyle = RARITY_ACCENT[heroRarity];
+  c.lineWidth = 2;
+  c.stroke();
+
+  c.fillStyle = RARITY_ACCENT[heroRarity];
+  c.font = "bold 12px system-ui, sans-serif";
+  c.fillText(heroRarity.toUpperCase(), pad + 16, heroY + 28);
+
+  c.fillStyle = "#fafafa";
+  c.font = "bold 18px system-ui, sans-serif";
+  const heroLines = wrapText(c, hero.title, heroW - 40, 24, 2);
+  heroLines.forEach((line, i) => {
+    c.fillText(line, pad + 16, heroY + 58 + i * 24);
+  });
+
+  c.fillStyle = "#a1a1aa";
+  c.font = "13px system-ui, sans-serif";
+  const bodyLines = wrapText(c, hero.body, heroW - 40, 18, 3);
+  bodyLines.forEach((line, i) => {
+    c.fillText(line, pad + 16, heroY + 100 + i * 18);
+  });
+
+  // Rest cards (small row below)
+  const restY = heroY + heroH + 20;
+  const restCardW = rest.length > 0 ? (heroW - (rest.length - 1) * 12) / rest.length : heroW;
+
+  rest.forEach((insight, idx) => {
+    const rarity = insight.rarity ?? "common";
+    const x = pad + idx * (restCardW + 12);
+
+    c.beginPath();
+    c.roundRect(x, restY, restCardW, 100, 8);
+    c.fillStyle = "#18181B";
+    c.fill();
+    c.strokeStyle = RARITY_ACCENT[rarity];
+    c.lineWidth = 1;
+    c.stroke();
+
+    c.fillStyle = RARITY_ACCENT[rarity];
+    c.font = "bold 9px system-ui, sans-serif";
+    c.fillText(rarity.toUpperCase(), x + 10, restY + 18);
+
+    c.fillStyle = "#fafafa";
+    c.font = "11px system-ui, sans-serif";
+    const lines = wrapText(c, insight.title, restCardW - 20, 14, 4);
+    lines.forEach((line, i) => {
+      c.fillText(line, x + 10, restY + 36 + i * 14);
+    });
+  });
+
+  // Footer
+  c.fillStyle = "#52525b";
+  c.font = "11px system-ui, sans-serif";
+  c.fillText("AI-powered self-improvement", pad, H - 20);
+  c.fillStyle = "#10b981";
+  c.textAlign = "right";
+  c.fillText("lifehud.vercel.app", W - pad, H - 20);
+  c.textAlign = "left";
+
   return canvas.toDataURL("image/png");
+}
+
+// Generate both formats; return story for mobile share, hero for twitter
+async function generateShareImage(insights: Insight[]): Promise<{ story: string; hero: string }> {
+  const [story, hero] = await Promise.all([
+    generateStoryImage(insights),
+    generateHeroImage(insights),
+  ]);
+  return { story, hero };
 }
 
 // ── Main modal ────────────────────────────────────────────────────────────────
@@ -256,7 +382,7 @@ interface PackRevealModalProps {
 export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [muted, setMuted] = useState(false);
-  const [shareImageUrl, setShareImageUrl] = useState<string | null>(null);
+  const [shareImages, setShareImages] = useState<{ story: string; hero: string } | null>(null);
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const { playRarity } = useRevealSound(muted);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -264,17 +390,21 @@ export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
   const allRevealed = revealed.size === insights.length;
 
   const handleReveal = useCallback(
-    (insight: Insight) => {
+    async (insight: Insight) => {
       setRevealed((prev) => new Set([...prev, insight.id]));
       playRarity(insight.rarity ?? "common");
+      // Mark as read in database
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      await supabase.from("insights").update({ is_read: true }).eq("id", insight.id);
     },
     [playRarity]
   );
 
   async function handleShare() {
     setIsGeneratingImage(true);
-    const url = await generateShareImage(insights);
-    setShareImageUrl(url);
+    const images = await generateShareImage(insights);
+    setShareImages(images);
     setIsGeneratingImage(false);
 
     const rarityStr = (["legendary", "epic", "rare"] as InsightRarity[])
@@ -282,19 +412,21 @@ export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
       .map((r) => r)
       .join(", ");
 
-    const tweetText = `Just opened my weekly insight pack from Life HUD 🃏${rarityStr ? ` Got a ${rarityStr} insight!` : ""} lifehud.vercel.app`;
+    const tweetText = `Just opened my weekly insight pack from Life HUD\n${rarityStr ? `Got a ${rarityStr} insight! ` : ""}lifehud.vercel.app`;
 
+    // Mobile: use story format via Web Share API
     if (navigator.share) {
       try {
-        const blob = await fetch(url).then((r) => r.blob());
+        const blob = await fetch(images.story).then((r) => r.blob());
         const file = new File([blob], "lifehud-insights.png", { type: "image/png" });
         await navigator.share({ title: "My Life HUD Insights", text: tweetText, files: [file] });
         return;
       } catch {
-        // Fall through to Twitter
+        // Fall through to Twitter with hero format
       }
     }
 
+    // Desktop: use hero format for Twitter intent
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`,
       "_blank"
@@ -302,9 +434,9 @@ export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
   }
 
   function handleDownload() {
-    if (!shareImageUrl) return;
+    if (!shareImages) return;
     const a = document.createElement("a");
-    a.href = shareImageUrl;
+    a.href = shareImages.story;
     a.download = "lifehud-insights.png";
     a.click();
   }
@@ -383,12 +515,12 @@ export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.35, ease: "easeOut" }}
             >
-              {shareImageUrl ? (
+              {shareImages ? (
                 <div className="space-y-3">
                   <img
-                    src={shareImageUrl}
+                    src={shareImages.story}
                     alt="Share preview"
-                    className="rounded-xl w-full border border-zinc-800"
+                    className="rounded-xl w-full max-w-sm mx-auto border border-zinc-800"
                   />
                   <div className="flex gap-2">
                     <button

@@ -14,7 +14,7 @@ import {
   Trash2,
   ArrowLeft,
 } from "lucide-react";
-import { parseGarminZip } from "@/lib/garmin/parser";
+import { parseGarminExport } from "@/lib/garmin/parser";
 import { parseFitbitZip } from "@/lib/fitbit/parser";
 import { parseAppleHealth } from "@/lib/apple-health/parser";
 import type { DeviceImportData } from "@/types/index";
@@ -38,11 +38,11 @@ const DEVICE_CONFIG: Record<DeviceType, DeviceConfig> = {
   garmin: {
     label: "Garmin",
     source: "garmin_csv",
-    fileAccept: ".zip",
+    fileAccept: ".zip,.csv",
     multiple: false,
-    dropLabel: "Drop your Garmin export .zip here",
-    dropHint: "or click to browse",
-    instructions: "Garmin Connect → Account → Data Management → Export Your Data",
+    dropLabel: "Drop your Garmin export here",
+    dropHint: ".zip (full export) or .csv (activities)",
+    instructions: "Full export: garmin.com → Account → Data Management → Export Your Data. Activities only: Garmin Connect → Activities → Export CSV",
   },
   fitbit: {
     label: "Fitbit",
@@ -112,7 +112,7 @@ function DropZone({
   onDragLeave: () => void;
   onClick: () => void;
 }) {
-  const Icon = config.multiple ? FileText : FileArchive;
+  const Icon = config.fileAccept === ".zip" ? FileArchive : FileText;
   return (
     <div
       onDrop={onDrop}
@@ -130,18 +130,7 @@ function DropZone({
       </div>
       <div className="text-center">
         <p className="text-sm font-medium text-zinc-200">
-          {config.dropLabel.split(".zip").map((part, i) =>
-            i === 0 ? (
-              <span key={i}>
-                {part}
-                {config.fileAccept === ".zip" && (
-                  <span className="text-emerald-400">.zip</span>
-                )}
-              </span>
-            ) : (
-              <span key={i}>{part}</span>
-            )
-          )}
+          {config.dropLabel}
         </p>
         <p className="text-xs text-zinc-500 mt-1">{config.dropHint}</p>
       </div>
@@ -214,9 +203,10 @@ export function ImportFlow() {
       try {
         let parsed: DeviceImportData;
         if (device === "garmin") {
-          if (!files[0].name.toLowerCase().endsWith(".zip"))
-            throw new Error("Please upload a .zip file (Garmin Connect export).");
-          parsed = await parseGarminZip(files[0]);
+          const ext = files[0].name.toLowerCase();
+          if (!ext.endsWith(".zip") && !ext.endsWith(".csv"))
+            throw new Error("Please upload a .zip (full data export) or .csv (activities export) from Garmin.");
+          parsed = await parseGarminExport(files[0]);
         } else if (device === "fitbit") {
           if (!files[0].name.toLowerCase().endsWith(".zip"))
             throw new Error("Please upload a .zip file (Fitbit export).");

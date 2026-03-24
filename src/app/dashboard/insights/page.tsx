@@ -5,7 +5,11 @@ import { InsightCard } from "@/components/dashboard/InsightCard";
 import { CategoryFilter, StatusFilter } from "@/components/insights/InsightFilters";
 import { GenerateButton } from "@/components/insights/GenerateButton";
 import { RevealSection } from "@/components/insights/RevealSection";
-import type { Insight, InsightCategory } from "@/types/index";
+import type { Insight, InsightCategory, InsightRarity } from "@/types/index";
+
+const RARITY_RANK: Record<InsightRarity, number> = {
+  legendary: 0, epic: 1, rare: 2, uncommon: 3, common: 4,
+};
 import { redirect } from "next/navigation";
 
 const VALID_CATEGORIES = new Set(["sleep", "fitness", "recovery", "correlation", "goal", "general", "wellbeing"]);
@@ -41,7 +45,12 @@ export default async function InsightsPage({
   if (category !== "all") query = query.eq("category", category);
 
   const { data } = await query;
-  const insights = (data ?? []) as Insight[];
+  const insights = ((data ?? []) as Insight[]).sort((a, b) => {
+    const ra = RARITY_RANK[a.rarity ?? "common"];
+    const rb = RARITY_RANK[b.rarity ?? "common"];
+    if (ra !== rb) return ra - rb;
+    return (b.priority ?? 0) - (a.priority ?? 0);
+  });
 
   // Unread insights (for pack reveal prompt)
   const { data: unreadData, count: unreadCount } = await supabase

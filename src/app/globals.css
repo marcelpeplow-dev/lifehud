@@ -43,13 +43,103 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Legendary insight pulsing border */
-@keyframes legendary-pulse {
-  0%, 100% { border-color: #854D0E; box-shadow: 0 0 0 0 rgba(202, 138, 4, 0); }
-  50%       { border-color: #CA8A04; box-shadow: 0 0 10px 2px rgba(202, 138, 4, 0.25); }
+/* ── Rarity border effects (Rising Heat Glow) ────────────────────────────── */
+
+/* Uncommon: static green bar at bottom */
+.rarity-uncommon {
+  border: 1px solid #22C55E;
+  position: relative;
 }
-.legendary-pulse {
-  animation: legendary-pulse 2.4s ease-in-out infinite;
+.rarity-uncommon::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #22C55E;
+  opacity: 0.5;
+  border-radius: 0 0 11px 11px;
+}
+
+/* Rare: blue border + breathing bottom gradient */
+@keyframes rare-breathe {
+  0%, 100% { opacity: 0.18; }
+  50%      { opacity: 0.24; }
+}
+.rarity-rare {
+  border: 1.5px solid #3B82F6;
+  position: relative;
+  overflow: hidden;
+}
+.rarity-rare::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20%;
+  background: linear-gradient(to top, rgba(59,130,246,0.12), transparent);
+  animation: rare-breathe 2.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Epic: purple border + taller gradient + inset shadow */
+@keyframes epic-breathe {
+  0%, 100% { opacity: 0.30; }
+  50%      { opacity: 0.40; }
+}
+.rarity-epic {
+  border: 1.5px solid #8B5CF6;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 -8px 12px -6px rgba(139,92,246,0.2);
+}
+.rarity-epic::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 35%;
+  background: linear-gradient(to top, rgba(139,92,246,0.15), transparent);
+  animation: epic-breathe 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Legendary: gold border + flicker gradient + pulsing aura */
+@keyframes legendary-flicker {
+  0%   { height: 45%; opacity: 0.7; }
+  25%  { height: 55%; opacity: 1.0; }
+  50%  { height: 42%; opacity: 0.8; }
+  75%  { height: 52%; opacity: 0.95; }
+  100% { height: 45%; opacity: 0.7; }
+}
+@keyframes legendary-aura {
+  0%, 100% { box-shadow: inset 0 -12px 16px -6px rgba(234,179,8,0.25), 0 0 8px rgba(234,179,8,0.15); }
+  50%      { box-shadow: inset 0 -12px 16px -6px rgba(234,179,8,0.25), 0 0 16px rgba(234,179,8,0.3); }
+}
+.rarity-legendary {
+  border: 1.5px solid #CA8A04;
+  position: relative;
+  overflow: hidden;
+  animation: legendary-aura 2s ease-in-out infinite;
+}
+.rarity-legendary::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(234,179,8,0.18), transparent);
+  animation: legendary-flicker 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Common: plain dark border, no effects */
+.rarity-common {
+  background: #18181B;
+  border: 1px solid #27272A;
 }
 
 /* Legendary card shake on reveal */

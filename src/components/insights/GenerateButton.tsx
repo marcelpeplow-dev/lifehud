@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Sparkles } from "lucide-react";
 import { PackRevealModal } from "./PackRevealModal";
+import { createClient } from "@/lib/supabase/client";
 import type { Insight } from "@/types/index";
 
 export function GenerateButton() {
@@ -11,6 +12,20 @@ export function GenerateButton() {
   const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [packInsights, setPackInsights] = useState<Insight[] | null>(null);
+  const [hasUnread, setHasUnread] = useState(false);
+
+  useEffect(() => {
+    async function checkUnread() {
+      const supabase = createClient();
+      const { count } = await supabase
+        .from("insights")
+        .select("*", { count: "exact", head: true })
+        .eq("is_dismissed", false)
+        .eq("is_read", false);
+      setHasUnread((count ?? 0) > 0);
+    }
+    checkUnread();
+  }, []);
 
   async function generate() {
     setState("loading");
@@ -38,6 +53,7 @@ export function GenerateButton() {
 
   function handleModalClose() {
     setPackInsights(null);
+    setHasUnread(false);
     router.refresh();
   }
 
@@ -51,11 +67,12 @@ export function GenerateButton() {
         )}
         <button
           onClick={generate}
-          disabled={state === "loading"}
+          disabled={state === "loading" || hasUnread}
+          title={hasUnread ? "Open your existing pack first" : undefined}
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold transition-colors disabled:opacity-50"
         >
           <Sparkles className="w-4 h-4" />
-          {state === "loading" ? "Generating…" : "Generate insights"}
+          {state === "loading" ? "Generating…" : hasUnread ? "Open pack" : "Generate new pack"}
         </button>
       </div>
 
