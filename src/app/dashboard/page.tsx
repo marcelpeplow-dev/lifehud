@@ -1,14 +1,14 @@
 import { format, subDays, startOfWeek } from "date-fns";
-import { Moon, Dumbbell, Heart, Activity, SmilePlus, Flame } from "lucide-react";
+import { Moon, Dumbbell, SmilePlus, Flame } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { MetricCard } from "@/components/dashboard/MetricCard";
 import { InsightCard } from "@/components/dashboard/InsightCard";
 import { DailyActionCard } from "@/components/dashboard/DailyActionCard";
 import { SleepChart } from "@/components/charts/SleepChart";
 import { ActivityChart } from "@/components/charts/ActivityChart";
+import { StatCardsSection } from "@/components/dashboard/StatCardsSection";
 import { buildDateArray, formatRelativeDate } from "@/lib/utils/dates";
-import { formatDuration, formatMetric, calcTrend, average, calcProgress } from "@/lib/utils/metrics";
+import { formatDuration, average, calcProgress } from "@/lib/utils/metrics";
 import type { Insight, Goal, CheckIn, DailyAction, SleepChartDataPoint, WorkoutChartDataPoint } from "@/types/index";
 import { redirect } from "next/navigation";
 
@@ -35,6 +35,7 @@ export default async function DashboardPage() {
     { data: todayCheckInData },
     { data: dailyActionData },
     { data: allCheckInDates },
+    { data: statCardConfigs },
   ] = await Promise.all([
     supabase
       .from("sleep_records")
@@ -96,33 +97,21 @@ export default async function DashboardPage() {
       .eq("user_id", user.id)
       .gte("date", format(subDays(today, 90), "yyyy-MM-dd"))
       .order("date", { ascending: false }),
+    supabase
+      .from("user_dashboard_config")
+      .select("position, config")
+      .eq("user_id", user.id)
+      .eq("config_type", "stat_card")
+      .is("domain", null)
+      .order("position"),
   ]);
 
   // ── Metric computations ──────────────────────────────────────────────────
 
   const lastNight = recentSleep?.[0] ?? null;
-  const sleepAvg = average(recentSleep?.slice(1).map((s) => s.duration_minutes) ?? []);
-  const sleepTrend = calcTrend(lastNight?.duration_minutes, sleepAvg, "min");
-
   const workoutsThisWeek = weekWorkouts?.length ?? 0;
-  const workoutsLastWeek = lastWeekWorkouts?.length ?? 0;
   const workoutGoal = activeGoals?.find((g) => g.metric_name === "weekly_workouts");
   const weeklyTarget = workoutGoal?.target_value ?? 4;
-  const workoutTrendDir = workoutsThisWeek > workoutsLastWeek ? "up" : workoutsThisWeek < workoutsLastWeek ? "down" : "flat";
-  const workoutTrendLabel =
-    workoutsLastWeek === 0
-      ? `${workoutsThisWeek} this week`
-      : workoutTrendDir === "flat"
-      ? "same as last week"
-      : `${workoutTrendDir === "up" ? "+" : "−"}${Math.abs(workoutsThisWeek - workoutsLastWeek)} vs last week`;
-
-  const latestHR = recentMetrics?.[0]?.resting_heart_rate ?? null;
-  const hrAvg = average(recentMetrics?.slice(1).map((m) => m.resting_heart_rate) ?? []);
-  const hrTrend = calcTrend(latestHR, hrAvg, "bpm");
-
-  const latestHRV = recentMetrics?.[0]?.hrv_average ?? null;
-  const hrvAvg = average(recentMetrics?.slice(1).map((m) => m.hrv_average) ?? []);
-  const hrvTrend = calcTrend(latestHRV, hrvAvg, "ms");
 
   // ── Chart data ────────────────────────────────────────────────────────────
 
@@ -213,42 +202,11 @@ export default async function DashboardPage() {
         <DailyActionCard initial={dailyAction} />
       </section>
 
-      {/* Metric cards */}
+      {/* Customizable stat cards */}
       <section>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <MetricCard
-            label="Sleep last night"
-            value={formatDuration(lastNight?.duration_minutes)}
-            trend={sleepTrend.direction}
-            trendLabel={sleepTrend.label}
-            trendPositive={true}
-            icon={Moon}
-          />
-          <MetricCard
-            label="Workouts this week"
-            value={`${workoutsThisWeek}`}
-            trend={workoutTrendDir}
-            trendLabel={workoutTrendLabel}
-            trendPositive={true}
-            ring={{ current: workoutsThisWeek, target: weeklyTarget }}
-          />
-          <MetricCard
-            label="Resting heart rate"
-            value={formatMetric(latestHR, "bpm")}
-            trend={hrTrend.direction}
-            trendLabel={hrTrend.label}
-            trendPositive={false}
-            icon={Heart}
-          />
-          <MetricCard
-            label="HRV"
-            value={formatMetric(latestHRV, "ms")}
-            trend={hrvTrend.direction}
-            trendLabel={hrvTrend.label}
-            trendPositive={true}
-            icon={Activity}
-          />
-        </div>
+        <StatCardsSection
+          initialConfigs={(statCardConfigs ?? []) as { position: number; config: { metricId: string; domain: string } }[]}
+        />
       </section>
 
       {/* Today's check-in + streak */}
