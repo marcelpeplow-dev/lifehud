@@ -144,20 +144,29 @@ export interface Insight {
 
 export type GoalCategory = "sleep" | "fitness" | "recovery" | "general";
 export type GoalFrequency = "daily" | "weekly" | "monthly";
+export type GoalStatus = "active" | "achieved" | "archived";
 
 export interface Goal {
   id: string;
   user_id: string;
   title: string;
+  // Legacy fields (kept for backwards compat)
   category: GoalCategory;
   metric_name: string;
-  target_value: number;
   target_unit: string;
   target_frequency: GoalFrequency;
   current_value: number;
   start_date: string;
-  target_date: string | null;
   is_active: boolean;
+  // New fields (added via migration)
+  domain?: string;
+  metric_id?: string;
+  unit?: string;
+  starred?: boolean;
+  status?: GoalStatus;
+  // Shared
+  target_value: number;
+  target_date: string | null;
   created_at: string;
   updated_at: string;
 }

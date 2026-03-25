@@ -1,5 +1,5 @@
 import { format, subDays, startOfWeek } from "date-fns";
-import { Moon, Dumbbell, SmilePlus, Flame } from "lucide-react";
+import { Moon, Dumbbell, SmilePlus, Flame, Target } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { InsightCard } from "@/components/dashboard/InsightCard";
@@ -10,7 +10,7 @@ import { StatCardsSection } from "@/components/dashboard/StatCardsSection";
 import { ConfigurableGraph } from "@/components/dashboard/ConfigurableGraph";
 import type { GraphConfig } from "@/components/dashboard/GraphBuilderModal";
 import { buildDateArray, formatRelativeDate } from "@/lib/utils/dates";
-import { formatDuration, average, calcProgress } from "@/lib/utils/metrics";
+import { formatDuration, calcProgress } from "@/lib/utils/metrics";
 import type { Insight, Goal, CheckIn, DailyAction, SleepChartDataPoint, WorkoutChartDataPoint } from "@/types/index";
 import { redirect } from "next/navigation";
 
@@ -75,7 +75,10 @@ export default async function DashboardPage() {
       .from("goals")
       .select("*")
       .eq("user_id", user.id)
-      .eq("is_active", true),
+      .eq("is_active", true)
+      .order("starred", { ascending: false })
+      .order("created_at", { ascending: false })
+      .limit(20),
     supabase
       .from("workouts")
       .select("date, duration_minutes")
@@ -322,43 +325,43 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {/* Goals progress */}
-      {goals.length > 0 && (
-        <section>
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest mb-3">
-            Goals
-          </h2>
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl divide-y divide-zinc-800">
-            {goals.map((goal) => {
-              const pct = getGoalProgress(goal);
-              return (
-                <div key={goal.id} className="p-5">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-zinc-50">
-                      {goal.title}
-                    </span>
-                    <span className="text-sm font-semibold text-zinc-300 tabular-nums">
-                      {pct}%
-                    </span>
+      {/* Goals progress — show starred first, then most recent; max 4 */}
+      {goals.length > 0 && (() => {
+        // Deduplicate by id (guard against any DB duplicates)
+        const seen = new Set<string>();
+        const deduped = goals.filter((g) => { if (seen.has(g.id)) return false; seen.add(g.id); return true; });
+        // Starred first (already ordered by query), show up to 4
+        const displayed = deduped.slice(0, 4);
+        return (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest">Goals</h2>
+              <Link href="/dashboard/goals" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1">
+                View all <Target className="w-3 h-3" />
+              </Link>
+            </div>
+            <div className="bg-zinc-900 border border-zinc-800 rounded-xl divide-y divide-zinc-800">
+              {displayed.map((goal) => {
+                const pct = getGoalProgress(goal);
+                const progressColor = pct >= 100 ? "bg-emerald-500" : pct >= 70 ? "bg-blue-500" : pct >= 40 ? "bg-amber-500" : "bg-red-500";
+                return (
+                  <div key={goal.id} className="p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-zinc-50 truncate">{goal.title}</span>
+                      <span className={`text-xs font-semibold tabular-nums ml-2 shrink-0 ${pct >= 100 ? "text-emerald-400" : pct >= 70 ? "text-blue-400" : pct >= 40 ? "text-amber-400" : "text-red-400"}`}>
+                        {pct}%
+                      </span>
+                    </div>
+                    <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                      <div className={`h-full ${progressColor} rounded-full transition-all`} style={{ width: `${Math.min(pct, 100)}%` }} />
+                    </div>
                   </div>
-                  <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-blue-500 rounded-full transition-all"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                  <p className="text-xs text-zinc-500 mt-1.5">
-                    Target: {goal.target_value} {goal.target_unit}{" "}
-                    {goal.target_frequency === "daily"
-                      ? "· " + formatRelativeDate(todayStr)
-                      : "· this week"}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }
