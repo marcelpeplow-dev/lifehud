@@ -7,7 +7,7 @@
 import "./sleep";
 import "./fitness";
 import "./chess";
-import "./mood";
+import "./wellbeing";
 
 // Cross-domain detectors
 import "./sleep-fitness";

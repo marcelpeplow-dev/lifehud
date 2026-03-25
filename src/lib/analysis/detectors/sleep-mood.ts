@@ -7,7 +7,7 @@ import { mean, effectToSignificance } from "./utils";
 registerDetector({
   id: "MOOD_SLEEP_CORRELATION",
   name: "Sleep duration vs next-day mood",
-  requiredDomains: ["sleep", "mood"],
+  requiredDomains: ["sleep", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     if (data.checkins.length < 5) return null;
@@ -35,7 +35,7 @@ registerDetector({
       detectorId: "MOOD_SLEEP_CORRELATION",
       type: "mood_sleep_correlation",
       description: `Mood is ${delta.toFixed(1)} points higher after 7h+ sleep vs under 6h (${goodAvg}/10 vs ${poorAvg}/10). ${moodAfterGoodSleep.length + moodAfterPoorSleep.length} check-ins analyzed.`,
-      domains: ["sleep", "mood"],
+      domains: ["sleep", "wellbeing"],
       data: {
         mood_good_sleep: goodAvg,
         mood_poor_sleep: poorAvg,
@@ -53,7 +53,7 @@ registerDetector({
 registerDetector({
   id: "STRESS_SLEEP_CORRELATION",
   name: "Stress vs next-night sleep",
-  requiredDomains: ["sleep", "mood"],
+  requiredDomains: ["sleep", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     if (data.checkins.length < 5) return null;
@@ -81,7 +81,7 @@ registerDetector({
       detectorId: "STRESS_SLEEP_CORRELATION",
       type: "stress_sleep_correlation",
       description: `High-stress days (7+/10) are followed by ${delta.toFixed(1)}h less sleep than calm days (${highAvgH}h vs ${lowAvgH}h). ${sleepAfterHighStress.length + sleepAfterLowStress.length} nights analyzed.`,
-      domains: ["sleep", "mood"],
+      domains: ["sleep", "wellbeing"],
       data: {
         sleep_after_stress: highAvgH,
         sleep_after_calm: lowAvgH,
@@ -99,7 +99,7 @@ registerDetector({
 registerDetector({
   id: "BEDTIME_ENERGY_CORRELATION",
   name: "Bedtime timing vs next-day energy",
-  requiredDomains: ["sleep", "mood"],
+  requiredDomains: ["sleep", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     if (data.checkins.length < 5) return null;
@@ -138,7 +138,7 @@ registerDetector({
       detectorId: "BEDTIME_ENERGY_CORRELATION",
       type: "bedtime_energy_correlation",
       description: `Next-day energy is ${Math.abs(delta).toFixed(1)} points higher after earlier bedtimes vs late nights (${earlyEnergy}/10 vs ${lateEnergy}/10). Your highest-energy days follow a ~${optH}:${optM.toString().padStart(2, "0")} bedtime. ${bedtimesWithEnergy.length} nights analyzed.`,
-      domains: ["sleep", "mood"],
+      domains: ["sleep", "wellbeing"],
       data: {
         early_energy: earlyEnergy,
         late_energy: lateEnergy,

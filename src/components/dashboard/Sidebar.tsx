@@ -9,7 +9,7 @@ import {
   Dumbbell,
   Sparkles,
   Target,
-  SmilePlus,
+  ClipboardList,
   Swords,
   Settings,
   LogOut,
@@ -29,7 +29,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Sleep", href: "/dashboard/sleep", icon: Moon },
   { label: "Fitness", href: "/dashboard/fitness", icon: Dumbbell },
   { label: "Chess", href: "/dashboard/chess", icon: Swords },
-  { label: "Check-ins", href: "/dashboard/checkins", icon: SmilePlus },
+  { label: "Daily Input", href: "/dashboard/daily-input", icon: ClipboardList },
   { label: "Insights", href: "/dashboard/insights", icon: Sparkles },
   { label: "Goals", href: "/dashboard/goals", icon: Target },
 ];

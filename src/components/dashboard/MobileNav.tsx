@@ -9,6 +9,7 @@ import {
   Sparkles,
   Swords,
   Target,
+  ClipboardList,
 } from "lucide-react";
 
 interface NavItem {
@@ -25,6 +26,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Chess", href: "/dashboard/chess", icon: Swords },
   { label: "Insights", href: "/dashboard/insights", icon: Sparkles },
   { label: "Goals", href: "/dashboard/goals", icon: Target },
+  { label: "Daily", href: "/dashboard/daily-input", icon: ClipboardList },
 ];
 
 export function MobileNav() {

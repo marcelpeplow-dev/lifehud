@@ -11,6 +11,7 @@ import { LichessCard } from "@/components/settings/LichessCard";
 import { ConnectLichessButton } from "@/components/settings/ConnectLichessButton";
 import { getUser as getLichessUser } from "@/lib/lichess/client";
 import { SignOutButton } from "@/components/settings/SignOutButton";
+import { ManualTrackingSection } from "@/components/settings/ManualTrackingSection";
 import type { Profile, DeviceConnection } from "@/types/index";
 import { redirect } from "next/navigation";
 
@@ -48,7 +49,7 @@ export default async function SettingsPage({
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profileData }, { data: devicesData }, { data: fitbitData }] = await Promise.all([
+  const [{ data: profileData }, { data: devicesData }, { data: fitbitData }, { data: manualConfigData }] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
       .from("device_connections")
@@ -62,6 +63,7 @@ export default async function SettingsPage({
       .eq("user_id", user.id)
       .eq("provider", "fitbit")
       .maybeSingle(),
+    supabase.from("user_manual_config").select("*").eq("user_id", user.id).order("display_order"),
   ]);
 
   const profile = profileData as Profile | null;
@@ -221,6 +223,14 @@ export default async function SettingsPage({
             <ConnectDeviceButton />
           </div>
         </div>
+      </Section>
+
+      {/* Manual Tracking */}
+      <Section
+        title="Manual Tracking"
+        description="Choose which domains you want to log manually each day."
+      >
+        <ManualTrackingSection initialConfigs={manualConfigData ?? []} />
       </Section>
 
       {/* Account */}

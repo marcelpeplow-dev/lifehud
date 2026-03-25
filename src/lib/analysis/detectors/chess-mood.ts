@@ -7,7 +7,7 @@ import { mean, winRate, avgAccuracy, effectToSignificance } from "./utils";
 registerDetector({
   id: "CHESS_MOOD_CORRELATION",
   name: "Mood vs chess performance",
-  requiredDomains: ["chess", "mood"],
+  requiredDomains: ["chess", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     if (data.checkins.length < 5) return null;
@@ -37,7 +37,7 @@ registerDetector({
       detectorId: "CHESS_MOOD_CORRELATION",
       type: "chess_mood_correlation",
       description: `When your mood is above 7, your chess win rate is ${highWR}% vs ${lowWR}% when mood is below 5 — a ${Math.abs(wrDelta)}% difference. ${highMoodGames.length + lowMoodGames.length} games analyzed.`,
-      domains: ["chess", "mood"],
+      domains: ["chess", "wellbeing"],
       data: {
         high_mood_wr: highWR,
         low_mood_wr: lowWR,
@@ -55,7 +55,7 @@ registerDetector({
 registerDetector({
   id: "CHESS_STRESS_CORRELATION",
   name: "Stress vs chess performance",
-  requiredDomains: ["chess", "mood"],
+  requiredDomains: ["chess", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     if (data.checkins.length < 5) return null;
@@ -106,7 +106,7 @@ registerDetector({
       detectorId: "CHESS_STRESS_CORRELATION",
       type: "chess_stress_correlation",
       description: `When stress is low (<4), ${parts.join(" and ")}. ${highStressGames.length + lowStressGames.length} games analyzed.`,
-      domains: ["chess", "mood"],
+      domains: ["chess", "wellbeing"],
       data: {
         high_stress_wr: highWR,
         low_stress_wr: lowWR,
@@ -127,7 +127,7 @@ registerDetector({
 registerDetector({
   id: "CHESS_ENERGY_CORRELATION",
   name: "Energy vs chess performance",
-  requiredDomains: ["chess", "mood"],
+  requiredDomains: ["chess", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     if (data.checkins.length < 5) return null;
@@ -180,7 +180,7 @@ registerDetector({
       detectorId: "CHESS_ENERGY_CORRELATION",
       type: "chess_energy_correlation",
       description: `When energy is above 7, your chess ${parts.join(" and ")} compared to low-energy days (<5). ${highEnergyGames.length + lowEnergyGames.length} games analyzed.`,
-      domains: ["chess", "mood"],
+      domains: ["chess", "wellbeing"],
       data: {
         high_energy_wr: highWR,
         low_energy_wr: lowWR,
@@ -201,7 +201,7 @@ registerDetector({
 registerDetector({
   id: "CHESS_LOSSES_VS_NEXT_DAY_MOOD",
   name: "Chess losses vs next-day mood",
-  requiredDomains: ["chess", "mood"],
+  requiredDomains: ["chess", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     const heavyLossDayMoods: number[] = [];
@@ -233,7 +233,7 @@ registerDetector({
       detectorId: "CHESS_LOSSES_VS_NEXT_DAY_MOOD",
       type: "chess_losses_next_day_mood",
       description: `After losing 3+ chess games, your next-day mood averages ${heavyMean.toFixed(1)} vs ${lightMean.toFixed(1)} after winning sessions.`,
-      domains: ["chess", "mood"],
+      domains: ["chess", "wellbeing"],
       data: {
         heavy_loss_next_mood: Math.round(heavyMean * 10) / 10,
         light_day_next_mood: Math.round(lightMean * 10) / 10,
@@ -251,7 +251,7 @@ registerDetector({
 registerDetector({
   id: "MOOD_VS_CHESS_RISK_TAKING",
   name: "Mood vs chess risk-taking",
-  requiredDomains: ["chess", "mood"],
+  requiredDomains: ["chess", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     const aggressivePatterns = ["Gambit", "King's Indian", "Sicilian", "Dutch", "Grünfeld"];
@@ -297,7 +297,7 @@ registerDetector({
       detectorId: "MOOD_VS_CHESS_RISK_TAKING",
       type: "mood_chess_risk_taking",
       description: `When your mood is above 7, you play aggressive openings ${highAggPct}% of the time.`,
-      domains: ["chess", "mood"],
+      domains: ["chess", "wellbeing"],
       data: {
         high_mood_aggressive_pct: highAggPct,
         low_mood_aggressive_pct: lowAggPct,
@@ -315,7 +315,7 @@ registerDetector({
 registerDetector({
   id: "STRESS_VS_CHESS_TILT",
   name: "Stress vs chess tilt",
-  requiredDomains: ["chess", "mood"],
+  requiredDomains: ["chess", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     let highStressGames = 0;
@@ -365,7 +365,7 @@ registerDetector({
       detectorId: "STRESS_VS_CHESS_TILT",
       type: "stress_chess_tilt",
       description: `On high-stress days, you play revenge games ${ratioLabel} more often.`,
-      domains: ["chess", "mood"],
+      domains: ["chess", "wellbeing"],
       data: {
         high_stress_revenge_rate: Math.round(highRevengeRate * 100),
         low_stress_revenge_rate: Math.round(lowRevengeRate * 100),

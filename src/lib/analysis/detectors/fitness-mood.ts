@@ -7,7 +7,7 @@ import { mean, effectToSignificance } from "./utils";
 registerDetector({
   id: "ENERGY_WORKOUT_CORRELATION",
   name: "Workout days vs rest days energy",
-  requiredDomains: ["fitness", "mood"],
+  requiredDomains: ["fitness", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     if (data.checkins.length < 5) return null;
@@ -33,7 +33,7 @@ registerDetector({
       detectorId: "ENERGY_WORKOUT_CORRELATION",
       type: "energy_workout_correlation",
       description: `Energy is ${delta.toFixed(1)} points ${workoutAvg > restAvg ? "higher" : "lower"} on workout days vs rest days (${workoutAvg}/10 vs ${restAvg}/10). ${energyWorkout.length + energyRest.length} days analyzed.`,
-      domains: ["fitness", "mood"],
+      domains: ["fitness", "wellbeing"],
       data: {
         energy_workout: workoutAvg,
         energy_rest: restAvg,
@@ -51,7 +51,7 @@ registerDetector({
 registerDetector({
   id: "WORKOUT_STRESS_CORRELATION",
   name: "Workout vs next-day stress",
-  requiredDomains: ["fitness", "mood"],
+  requiredDomains: ["fitness", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     if (data.checkins.length < 5 || data.workouts.length < 5) return null;
@@ -78,7 +78,7 @@ registerDetector({
       detectorId: "WORKOUT_STRESS_CORRELATION",
       type: "workout_stress_correlation",
       description: `Stress is ${Math.abs(delta).toFixed(1)} points ${delta > 0 ? "lower" : "higher"} the day after a workout vs a rest day (${workoutAvg}/10 vs ${restAvg}/10). ${stressAfterWorkout.length + stressAfterRest.length} days analyzed.`,
-      domains: ["fitness", "mood"],
+      domains: ["fitness", "wellbeing"],
       data: {
         stress_after_workout: workoutAvg,
         stress_after_rest: restAvg,
@@ -96,7 +96,7 @@ registerDetector({
 registerDetector({
   id: "EXERCISE_MOOD_BOOST",
   name: "Exercise mood boost",
-  requiredDomains: ["fitness", "mood"],
+  requiredDomains: ["fitness", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     const moodWorkoutDay: number[] = [];
@@ -136,7 +136,7 @@ registerDetector({
       detectorId: "EXERCISE_MOOD_BOOST",
       type: "exercise_mood_boost",
       description: `Your mood averages ${workoutAvg} on workout days vs ${restAvg} on rest days — a ${Math.abs(pctChange)}% ${delta > 0 ? "boost" : "drop"}.${afterAvg !== null ? ` Day-after mood: ${afterAvg}/10.` : ""} ${totalPoints} days analyzed.`,
-      domains: ["fitness", "mood"],
+      domains: ["fitness", "wellbeing"],
       data: {
         mood_workout: workoutAvg,
         mood_rest: restAvg,
@@ -161,7 +161,7 @@ registerDetector({
 registerDetector({
   id: "WORKOUT_INTENSITY_VS_NEXT_DAY_ENERGY",
   name: "Workout intensity vs next-day energy",
-  requiredDomains: ["fitness", "mood"],
+  requiredDomains: ["fitness", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     const buckets: Record<string, number[]> = {
@@ -229,7 +229,7 @@ registerDetector({
       detectorId: "WORKOUT_INTENSITY_VS_NEXT_DAY_ENERGY",
       type: "workout_intensity_vs_next_day_energy",
       description: `After workouts ${bucketLabels[lowest[0]]}, your next-day energy drops by ${delta.toFixed(1)} points (${lowest[1]}/10 vs ${highest[1]}/10 after ${bucketLabels[highest[0]]}). ${totalPoints} sessions analyzed.`,
-      domains: ["fitness", "mood"],
+      domains: ["fitness", "wellbeing"],
       data: {
         energy_after_short: avgByBucket.short,
         energy_after_medium: avgByBucket.medium,
@@ -253,7 +253,7 @@ registerDetector({
 registerDetector({
   id: "CONSISTENCY_VS_MOOD_BASELINE",
   name: "Workout consistency vs mood baseline",
-  requiredDomains: ["fitness", "mood"],
+  requiredDomains: ["fitness", "wellbeing"],
   category: "cross",
   detect: (data: UserDataBundle) => {
     // Group workouts and moods by ISO week
@@ -302,7 +302,7 @@ registerDetector({
       detectorId: "CONSISTENCY_VS_MOOD_BASELINE",
       type: "consistency_vs_mood_baseline",
       description: `In weeks you work out 3+ times, your average mood is ${activeAvg} vs ${sedentaryAvg} in sedentary weeks. ${totalWeeks} weeks analyzed.`,
-      domains: ["fitness", "mood"],
+      domains: ["fitness", "wellbeing"],
       data: {
         mood_active_weeks: activeAvg,
         mood_sedentary_weeks: sedentaryAvg,

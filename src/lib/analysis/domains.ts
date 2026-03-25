@@ -1,9 +1,30 @@
 import { format, subDays } from "date-fns";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type Domain = "sleep" | "fitness" | "chess" | "mood" | "recovery";
+export type Domain =
+  | "sleep"
+  | "fitness"
+  | "chess"
+  | "wellbeing"
+  | "recovery"
+  | "caffeine"
+  | "hydration"
+  | "supplements"
+  | "screen_time"
+  | "substances";
 
-export const ALL_DOMAINS: Domain[] = ["sleep", "fitness", "chess", "mood", "recovery"];
+export const ALL_DOMAINS: Domain[] = [
+  "sleep",
+  "fitness",
+  "chess",
+  "wellbeing",
+  "recovery",
+  "caffeine",
+  "hydration",
+  "supplements",
+  "screen_time",
+  "substances",
+];
 
 export interface DomainDiscovery {
   activeDomains: Set<Domain>;
@@ -21,8 +42,18 @@ export async function discoverActiveDomains(
 ): Promise<DomainDiscovery> {
   const thirtyDaysAgo = format(subDays(new Date(), 30), "yyyy-MM-dd");
 
+  // All manual domain metric IDs — single query covers all 5 manual domains
+  const MANUAL_METRIC_IDS: Record<string, string[]> = {
+    caffeine:    ["caffeine_total_daily", "caffeine_doses", "caffeine_last_dose", "caffeine_first_dose"],
+    hydration:   ["hydration_water_intake"],
+    supplements: ["supplements_taken", "supplements_dose"],
+    screen_time: ["screen_time_total", "screen_time_before_bed"],
+    substances:  ["substances_alcohol", "substances_cannabis"],
+  };
+  const allManualMetricIds = Object.values(MANUAL_METRIC_IDS).flat();
+
   // Fetch all domain data counts in parallel
-  const [sleepRes, workoutRes, metricsRes, chessRes, checkinRes, recoveryRes] =
+  const [sleepRes, workoutRes, metricsRes, chessRes, checkinRes, recoveryRes, manualRes] =
     await Promise.all([
       // Sleep: distinct dates in sleep_records
       supabase
@@ -52,7 +83,7 @@ export async function discoverActiveDomains(
         .eq("user_id", userId)
         .gte("date", thirtyDaysAgo),
 
-      // Mood: distinct dates in daily_checkins
+      // Wellbeing: distinct dates in daily_checkins OR manual_entries for wellbeing metrics
       supabase
         .from("daily_checkins")
         .select("date")
@@ -65,6 +96,15 @@ export async function discoverActiveDomains(
         .select("date, hrv_average, recovery_score")
         .eq("user_id", userId)
         .gte("date", thirtyDaysAgo),
+
+      // Manual domains (caffeine, hydration, supplements, screen_time, substances)
+      // Single batched query for all manual metric IDs
+      supabase
+        .from("manual_entries")
+        .select("date, metric_id")
+        .eq("user_id", userId)
+        .gte("date", thirtyDaysAgo)
+        .in("metric_id", allManualMetricIds),
     ]);
 
   const distinctDates = (rows: { date: string }[] | null) =>
@@ -75,7 +115,6 @@ export async function discoverActiveDomains(
   const metricsCount = distinctDates(metricsRes.data);
   const fitnessCount = Math.max(workoutCount, metricsCount);
   const chessCount = distinctDates(chessRes.data);
-  const moodCount = distinctDates(checkinRes.data);
 
   // Recovery: count days that have HRV or recovery_score data
   const recoveryCount = distinctDates(
@@ -85,13 +124,32 @@ export async function discoverActiveDomains(
     ),
   );
 
+  // Wellbeing: union of daily_checkins dates and manual_entries wellbeing metric dates
+  const checkinDates = new Set((checkinRes.data ?? []).map((r: { date: string }) => r.date));
+  const wellbeingMetricIds = new Set(["wellbeing_mood", "wellbeing_energy", "wellbeing_stress", "wellbeing_focus"]);
+  for (const row of manualRes.data ?? []) {
+    if (wellbeingMetricIds.has((row as { metric_id: string }).metric_id)) {
+      checkinDates.add((row as { date: string }).date);
+    }
+  }
+  const moodCount = checkinDates.size;
+
+  // Manual domains: count distinct dates per domain from the single batched query
+  const manualRows = (manualRes.data ?? []) as { date: string; metric_id: string }[];
+  const manualCountByDomain: Record<string, number> = {};
+  for (const [domain, metricIds] of Object.entries(MANUAL_METRIC_IDS)) {
+    const metricSet = new Set(metricIds);
+    const dates = new Set(manualRows.filter((r) => metricSet.has(r.metric_id)).map((r) => r.date));
+    manualCountByDomain[domain] = dates.size;
+  }
+
   const MIN_DAYS = 7;
   const activeDomains = new Set<Domain>();
 
   if (sleepCount >= MIN_DAYS) activeDomains.add("sleep");
   if (fitnessCount >= MIN_DAYS) activeDomains.add("fitness");
   if (chessCount >= MIN_DAYS) activeDomains.add("chess");
-  if (moodCount >= MIN_DAYS) activeDomains.add("mood");
+  if (moodCount >= MIN_DAYS) activeDomains.add("wellbeing");
 
   // Recovery requires sleep OR fitness active, plus HRV/recovery data
   if (
@@ -101,12 +159,22 @@ export async function discoverActiveDomains(
     activeDomains.add("recovery");
   }
 
+  // Manual domains activate at 7+ distinct days with any entry
+  for (const domain of Object.keys(MANUAL_METRIC_IDS) as Domain[]) {
+    if ((manualCountByDomain[domain] ?? 0) >= MIN_DAYS) activeDomains.add(domain);
+  }
+
   const dataCounts: Record<Domain, number> = {
     sleep: sleepCount,
     fitness: fitnessCount,
     chess: chessCount,
-    mood: moodCount,
+    wellbeing: moodCount,
     recovery: recoveryCount,
+    caffeine:    manualCountByDomain["caffeine"]    ?? 0,
+    hydration:   manualCountByDomain["hydration"]   ?? 0,
+    supplements: manualCountByDomain["supplements"] ?? 0,
+    screen_time: manualCountByDomain["screen_time"] ?? 0,
+    substances:  manualCountByDomain["substances"]  ?? 0,
   };
 
   return { activeDomains, dataCounts };

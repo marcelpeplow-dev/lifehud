@@ -11,6 +11,15 @@ import type {
   Insight,
 } from "@/types/index";
 
+export interface ManualEntry {
+  id: string;
+  user_id: string;
+  date: string;
+  metric_id: string;
+  value: number;
+  created_at: string;
+}
+
 export interface UserDataBundle {
   userId: string;
   activeDomains: Set<Domain>;
@@ -29,6 +38,10 @@ export interface UserDataBundle {
   checkinByDate: Map<string, CheckIn>;
   metricsByDate: Map<string, DailyMetrics>;
   chessByDate: Map<string, ChessGame[]>;
+
+  // Manual input data (caffeine, hydration, supplements, screen_time, substances)
+  manualEntries: ManualEntry[];
+  manualByDateAndMetric: Map<string, Map<string, number>>;
 
   // Previous insights for novelty checking
   recentInsights: Insight[];
@@ -75,7 +88,7 @@ export async function buildUserDataBundle(
           .order("date", { ascending: true })
       : Promise.resolve({ data: [] });
 
-  const fetchCheckins = activeDomains.has("mood")
+  const fetchCheckins = activeDomains.has("wellbeing")
     ? supabase
         .from("daily_checkins")
         .select("*")
@@ -91,6 +104,18 @@ export async function buildUserDataBundle(
         .eq("user_id", userId)
         .gte("date", thirtyDaysAgo)
         .order("played_at", { ascending: true })
+    : Promise.resolve({ data: [] });
+
+  const MANUAL_DOMAINS: Domain[] = ["caffeine", "hydration", "supplements", "screen_time", "substances"];
+  const hasManualDomains = MANUAL_DOMAINS.some((d) => activeDomains.has(d));
+
+  const fetchManualEntries = hasManualDomains
+    ? supabase
+        .from("manual_entries")
+        .select("*")
+        .eq("user_id", userId)
+        .gte("date", thirtyDaysAgo)
+        .order("date", { ascending: true })
     : Promise.resolve({ data: [] });
 
   const fetchGoals = supabase
@@ -113,6 +138,7 @@ export async function buildUserDataBundle(
     metricsRes,
     checkinRes,
     chessRes,
+    manualRes,
     goalsRes,
     insightsRes,
   ] = await Promise.all([
@@ -121,6 +147,7 @@ export async function buildUserDataBundle(
     fetchMetrics,
     fetchCheckins,
     fetchChess,
+    fetchManualEntries,
     fetchGoals,
     fetchRecentInsights,
   ]);
@@ -130,6 +157,7 @@ export async function buildUserDataBundle(
   const dailyMetrics = (metricsRes.data ?? []) as DailyMetrics[];
   const checkins = (checkinRes.data ?? []) as CheckIn[];
   const chessGames = (chessRes.data ?? []) as ChessGame[];
+  const manualEntries = (manualRes.data ?? []) as ManualEntry[];
   const goals = (goalsRes.data ?? []) as Goal[];
   const recentInsights = (insightsRes.data ?? []) as Insight[];
 
@@ -157,6 +185,14 @@ export async function buildUserDataBundle(
     chessByDate.set(g.date, arr);
   }
 
+  const manualByDateAndMetric = new Map<string, Map<string, number>>();
+  for (const entry of manualEntries) {
+    if (!manualByDateAndMetric.has(entry.date)) {
+      manualByDateAndMetric.set(entry.date, new Map());
+    }
+    manualByDateAndMetric.get(entry.date)!.set(entry.metric_id, Number(entry.value));
+  }
+
   return {
     userId,
     activeDomains,
@@ -171,6 +207,8 @@ export async function buildUserDataBundle(
     checkinByDate,
     metricsByDate,
     chessByDate,
+    manualEntries,
+    manualByDateAndMetric,
     recentInsights,
   };
 }
