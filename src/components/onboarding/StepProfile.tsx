@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo } from "react";
 import { ArrowRight } from "lucide-react";
 
 export interface ProfileData {
@@ -23,7 +26,45 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const inputCls = "w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-blue-500";
+const inputCls =
+  "w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-blue-500";
+const selectCls =
+  "w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 focus:outline-none focus:border-blue-500 appearance-none";
+
+const REGION_ORDER = [
+  "America", "Europe", "Asia", "Australia", "Pacific",
+  "Africa", "Atlantic", "Indian", "Arctic", "Antarctica", "Etc",
+];
+
+type TzOption = { tz: string; label: string };
+
+function getUtcOffset(tz: string, now: Date): string {
+  try {
+    return (
+      new Intl.DateTimeFormat("en", { timeZone: tz, timeZoneName: "shortOffset" })
+        .formatToParts(now)
+        .find((p) => p.type === "timeZoneName")?.value ?? ""
+    );
+  } catch {
+    return "";
+  }
+}
+
+function buildTimezoneGroups(): Record<string, TzOption[]> {
+  const zones: string[] =
+    typeof Intl !== "undefined" && "supportedValuesOf" in Intl
+      ? (Intl as { supportedValuesOf: (k: string) => string[] }).supportedValuesOf("timeZone")
+      : [];
+  const now = new Date();
+  const groups: Record<string, TzOption[]> = {};
+  for (const tz of zones) {
+    const region = tz.includes("/") ? tz.split("/")[0] : "Other";
+    const offset = getUtcOffset(tz, now);
+    const label = `${tz.replace(/_/g, " ")}${offset ? ` (${offset})` : ""}`;
+    (groups[region] ??= []).push({ tz, label });
+  }
+  return groups;
+}
 
 export function StepProfile({ data, onChange, onNext }: Props) {
   function set(field: keyof ProfileData, value: string) {
@@ -35,6 +76,14 @@ export function StepProfile({ data, onChange, onNext }: Props) {
     if (!data.display_name.trim()) return;
     onNext();
   }
+
+  const tzGroups = useMemo(buildTimezoneGroups, []);
+  const sortedRegions = [
+    ...REGION_ORDER.filter((r) => tzGroups[r]),
+    ...Object.keys(tzGroups)
+      .filter((r) => !REGION_ORDER.includes(r))
+      .sort(),
+  ];
 
   return (
     <form onSubmit={submit} className="space-y-5">
@@ -48,7 +97,7 @@ export function StepProfile({ data, onChange, onNext }: Props) {
           type="text"
           value={data.display_name}
           onChange={(e) => set("display_name", e.target.value)}
-          placeholder="e.g. Alex"
+          placeholder="Your name"
           className={inputCls}
           autoFocus
         />
@@ -64,12 +113,21 @@ export function StepProfile({ data, onChange, onNext }: Props) {
           />
         </Field>
         <Field label="Timezone">
-          <input
-            type="text"
+          <select
             value={data.timezone}
             onChange={(e) => set("timezone", e.target.value)}
-            className={inputCls}
-          />
+            className={selectCls}
+          >
+            {sortedRegions.map((region) => (
+              <optgroup key={region} label={region}>
+                {tzGroups[region].map(({ tz, label }) => (
+                  <option key={tz} value={tz}>
+                    {label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
         </Field>
       </div>
 
@@ -79,7 +137,6 @@ export function StepProfile({ data, onChange, onNext }: Props) {
             type="number"
             value={data.height_cm}
             onChange={(e) => set("height_cm", e.target.value)}
-            placeholder="175"
             min="100"
             max="250"
             className={inputCls}
@@ -90,7 +147,6 @@ export function StepProfile({ data, onChange, onNext }: Props) {
             type="number"
             value={data.weight_kg}
             onChange={(e) => set("weight_kg", e.target.value)}
-            placeholder="70"
             min="30"
             max="300"
             className={inputCls}

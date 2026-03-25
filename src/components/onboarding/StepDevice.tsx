@@ -13,10 +13,11 @@ interface Props {
   onSkip: () => void;
   onBack: () => void;
   connecting: boolean;
+  submitting: boolean;
   error: string | null;
 }
 
-export function StepDevice({ onConnect, onSkip, onBack, connecting, error }: Props) {
+export function StepDevice({ onConnect, onSkip, onBack, connecting, submitting, error }: Props) {
   return (
     <div className="space-y-6">
       <div>
@@ -60,15 +61,18 @@ export function StepDevice({ onConnect, onSkip, onBack, connecting, error }: Pro
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center gap-1.5 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-colors"
+          disabled={connecting || submitting}
+          className="flex items-center gap-1.5 px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-colors disabled:opacity-40"
         >
           <ArrowLeft className="w-4 h-4" /> Back
         </button>
         <button
           type="button"
           onClick={onSkip}
-          className="flex-1 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-colors"
+          disabled={connecting || submitting}
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-sm font-medium transition-colors disabled:opacity-40"
         >
+          {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           Skip for now
         </button>
       </div>

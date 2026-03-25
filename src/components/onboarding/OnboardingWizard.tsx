@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Activity } from "lucide-react";
 import { StepProfile, type ProfileData } from "./StepProfile";
-import { StepGoals, type GoalsData } from "./StepGoals";
+import { StepGoals, type DomainsData } from "./StepGoals";
 import { StepDevice } from "./StepDevice";
 
-const STEPS = ["Profile", "Goals", "Device"];
+const STEPS = ["Profile", "Domains", "Device"];
 
 const DEFAULT_PROFILE: ProfileData = {
   display_name: "",
@@ -17,9 +17,8 @@ const DEFAULT_PROFILE: ProfileData = {
   timezone: "",
 };
 
-const DEFAULT_GOALS: GoalsData = {
-  sleep_target_minutes: 480,
-  weekly_workouts_target: 4,
+const DEFAULT_DOMAINS: DomainsData = {
+  selectedDomains: ["sleep", "fitness"],
 };
 
 function StepDots({ current, total }: { current: number; total: number }) {
@@ -44,7 +43,7 @@ export function OnboardingWizard() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<ProfileData>(DEFAULT_PROFILE);
-  const [goals, setGoals] = useState<GoalsData>(DEFAULT_GOALS);
+  const [domains, setDomains] = useState<DomainsData>(DEFAULT_DOMAINS);
   const [connecting, setConnecting] = useState(false);
   const [deviceError, setDeviceError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -67,8 +66,7 @@ export function OnboardingWizard() {
         height_cm: profile.height_cm ? Number(profile.height_cm) : null,
         weight_kg: profile.weight_kg ? Number(profile.weight_kg) : null,
         timezone: profile.timezone,
-        sleep_target_minutes: goals.sleep_target_minutes,
-        weekly_workouts_target: goals.weekly_workouts_target,
+        selected_domains: domains.selectedDomains,
       }),
     });
     setSubmitting(false);
@@ -84,9 +82,7 @@ export function OnboardingWizard() {
       const res = await fetch("/api/terra/auth", { method: "POST" });
       const data = await res.json();
       if (!res.ok || !data.url) throw new Error(data.error ?? "Could not get widget URL");
-      // Open widget in a new tab
       window.open(data.url, "_blank", "noopener,noreferrer");
-      // Complete onboarding after opening (device connection happens async via webhook)
       await complete();
     } catch (err) {
       setDeviceError(err instanceof Error ? err.message : "Failed to connect device.");
@@ -124,8 +120,8 @@ export function OnboardingWizard() {
           )}
           {step === 1 && (
             <StepGoals
-              data={goals}
-              onChange={setGoals}
+              data={domains}
+              onChange={setDomains}
               onNext={() => setStep(2)}
               onBack={() => setStep(0)}
             />
@@ -135,7 +131,8 @@ export function OnboardingWizard() {
               onConnect={handleConnect}
               onSkip={complete}
               onBack={() => setStep(1)}
-              connecting={connecting || submitting}
+              connecting={connecting}
+              submitting={submitting}
               error={deviceError}
             />
           )}

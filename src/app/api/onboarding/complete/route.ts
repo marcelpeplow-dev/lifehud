@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { DOMAIN_REGISTRY } from "@/lib/metrics/domains";
 
 const Schema = z.object({
   display_name: z.string().min(1).max(80),
@@ -8,8 +9,7 @@ const Schema = z.object({
   height_cm: z.number().positive().nullable().optional(),
   weight_kg: z.number().positive().nullable().optional(),
   timezone: z.string().min(1).max(60),
-  sleep_target_minutes: z.number().int().min(180).max(720).optional(),
-  weekly_workouts_target: z.number().int().min(1).max(14).optional(),
+  selected_domains: z.array(z.string()).optional(),
 });
 
 export async function POST(request: Request) {
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { sleep_target_minutes, weekly_workouts_target, ...profileFields } = parsed.data;
+    const { selected_domains, ...profileFields } = parsed.data;
 
     // Update profile + mark onboarding complete
     const { error: profileError } = await supabase
@@ -34,41 +34,36 @@ export async function POST(request: Request) {
 
     if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
 
-    // Insert initial goals
-    const today = new Date().toISOString().slice(0, 10);
-    const goals = [];
+    // Enable default metrics for selected manual domains
+    if (selected_domains && selected_domains.length > 0) {
+      const manualConfigs: {
+        user_id: string;
+        domain: string;
+        metric_id: string;
+        enabled: boolean;
+        display_order: number;
+      }[] = [];
 
-    if (sleep_target_minutes) {
-      goals.push({
-        user_id: user.id,
-        title: `Sleep ${Math.round(sleep_target_minutes / 60 * 10) / 10} hours per night`,
-        category: "sleep",
-        metric_name: "sleep_duration",
-        target_value: sleep_target_minutes,
-        target_unit: "min",
-        target_frequency: "daily",
-        current_value: 0,
-        start_date: today,
-        is_active: true,
-      });
+      for (const domainId of selected_domains) {
+        const domain = DOMAIN_REGISTRY.find((d) => d.id === domainId);
+        if (!domain || domain.source !== "manual" || domain.defaultMetrics.length === 0) continue;
+        domain.defaultMetrics.forEach((metricId, idx) => {
+          manualConfigs.push({
+            user_id: user.id,
+            domain: domainId,
+            metric_id: metricId,
+            enabled: true,
+            display_order: idx,
+          });
+        });
+      }
+
+      if (manualConfigs.length > 0) {
+        await supabase
+          .from("user_manual_config")
+          .upsert(manualConfigs, { onConflict: "user_id,metric_id" });
+      }
     }
-
-    if (weekly_workouts_target) {
-      goals.push({
-        user_id: user.id,
-        title: `Work out ${weekly_workouts_target}× per week`,
-        category: "fitness",
-        metric_name: "weekly_workouts",
-        target_value: weekly_workouts_target,
-        target_unit: "workouts",
-        target_frequency: "weekly",
-        current_value: 0,
-        start_date: today,
-        is_active: true,
-      });
-    }
-
-    if (goals.length) await supabase.from("goals").insert(goals);
 
     return NextResponse.json({ success: true });
   } catch {
