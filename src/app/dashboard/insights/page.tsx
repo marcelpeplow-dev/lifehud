@@ -15,6 +15,18 @@ const RARITY_RANK: Record<InsightRarity, number> = {
 
 const VALID_STATUSES = new Set(["active", "unread", "dismissed"]);
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchWithRetry(fn: () => PromiseLike<any>, retries = 2, delay = 1000): Promise<any> {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (i === retries) throw err;
+      await new Promise(r => setTimeout(r, delay * (i + 1)));
+    }
+  }
+}
+
 /** Parse and validate the comma-separated domains param. */
 function parseDomains(raw: string | undefined): Domain[] {
   if (!raw) return [];
@@ -49,7 +61,8 @@ export default async function InsightsPage({
   else if (status === "unread") query = query.eq("is_dismissed", false).eq("is_read", false);
   else if (status === "dismissed") query = query.eq("is_dismissed", true);
 
-  const { data } = await query;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const { data } = await fetchWithRetry(() => query);
   let insights = ((data ?? []) as Insight[]);
 
   // Domain filtering: if specific domains selected, only keep insights

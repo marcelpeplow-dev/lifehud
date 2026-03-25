@@ -80,10 +80,10 @@ export function GraphChart({ metricIds, domainIds, seriesData, chartType, days, 
 
   const yAxes = dualAxis
     ? [
-        <YAxis key="left" yAxisId={0} orientation="left" tick={{ fill: "#a1a1aa", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />,
-        <YAxis key="right" yAxisId={1} orientation="right" tick={{ fill: "#a1a1aa", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />,
+        <YAxis key="left" yAxisId={0} orientation="left" domain={["auto", "auto"]} tick={{ fill: "#a1a1aa", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />,
+        <YAxis key="right" yAxisId={1} orientation="right" domain={["auto", "auto"]} tick={{ fill: "#a1a1aa", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />,
       ]
-    : [<YAxis key="left" yAxisId={0} tick={{ fill: "#a1a1aa", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />];
+    : [<YAxis key="left" yAxisId={0} domain={["auto", "auto"]} tick={{ fill: "#a1a1aa", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />];
 
   const tooltipEl = (
     <Tooltip

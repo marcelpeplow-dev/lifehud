@@ -70,8 +70,8 @@ export default async function GoalsPage() {
   function getCurrentValue(goal: Goal): number {
     const metricId = goal.metric_id ?? goal.metric_name;
     switch (metricId) {
-      case "sleep_total_duration":
-      case "sleep_duration":       return sleepMinutes / 60; // hours
+      case "sleep_total_duration": return sleepMinutes / 60; // hours — metric.format(fmtHours) expects hours
+      case "sleep_duration":       return sleepMinutes;     // minutes — legacyFormat/formatDuration expects minutes
       case "fitness_workouts_per_week":
       case "weekly_workouts":      return workoutCount;
       case "fitness_steps":

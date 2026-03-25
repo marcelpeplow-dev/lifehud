@@ -94,16 +94,15 @@ function FlipCard({ insight, index, isRevealed, onReveal }: FlipCardProps) {
       }}
     >
       <motion.div
-        className={shaking ? "legendary-shake" : ""}
-        style={{ transformStyle: "preserve-3d", position: "relative", height: 260 }}
+        className={`[transform-style:preserve-3d] relative ${shaking ? "legendary-shake" : ""}`}
+        style={{ height: 260 }}
         animate={{ rotateY: isRevealed ? 180 : 0 }}
         transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
         onClick={handleReveal}
       >
         {/* Card back */}
         <div
-          className="absolute inset-0 rounded-xl border border-zinc-700 bg-zinc-800 flex flex-col items-center justify-center gap-3 cursor-pointer select-none"
-          style={{ backfaceVisibility: "hidden" }}
+          className="absolute inset-0 rounded-xl border border-zinc-700 bg-zinc-800 flex flex-col items-center justify-center gap-3 cursor-pointer select-none [backface-visibility:hidden]"
         >
           <div className="w-12 h-12 rounded-full bg-zinc-700 flex items-center justify-center">
             <span className="text-2xl font-bold text-zinc-400">?</span>
@@ -116,8 +115,7 @@ function FlipCard({ insight, index, isRevealed, onReveal }: FlipCardProps) {
 
         {/* Card front */}
         <div
-          className={`absolute inset-0 rounded-xl ${RARITY_CARD_CLASS[rarity]} bg-zinc-900 p-4 flex flex-col`}
-          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+          className={`absolute inset-0 rounded-xl ${RARITY_CARD_CLASS[rarity]} bg-zinc-900 p-4 flex flex-col [backface-visibility:hidden] [transform:rotateY(180deg)]`}
         >
           <ParticleBurst color={accentColor} active={isRevealed && isEpicOrLegendary} />
 
