@@ -7,6 +7,8 @@ import { DailyActionCard } from "@/components/dashboard/DailyActionCard";
 import { SleepChart } from "@/components/charts/SleepChart";
 import { ActivityChart } from "@/components/charts/ActivityChart";
 import { StatCardsSection } from "@/components/dashboard/StatCardsSection";
+import { ConfigurableGraph } from "@/components/dashboard/ConfigurableGraph";
+import type { GraphConfig } from "@/components/dashboard/GraphBuilderModal";
 import { buildDateArray, formatRelativeDate } from "@/lib/utils/dates";
 import { formatDuration, average, calcProgress } from "@/lib/utils/metrics";
 import type { Insight, Goal, CheckIn, DailyAction, SleepChartDataPoint, WorkoutChartDataPoint } from "@/types/index";
@@ -36,6 +38,7 @@ export default async function DashboardPage() {
     { data: dailyActionData },
     { data: allCheckInDates },
     { data: statCardConfigs },
+    { data: graphConfigs },
   ] = await Promise.all([
     supabase
       .from("sleep_records")
@@ -102,6 +105,13 @@ export default async function DashboardPage() {
       .select("position, config")
       .eq("user_id", user.id)
       .eq("config_type", "stat_card")
+      .is("domain", null)
+      .order("position"),
+    supabase
+      .from("user_dashboard_config")
+      .select("position, config")
+      .eq("user_id", user.id)
+      .eq("config_type", "graph")
       .is("domain", null)
       .order("position"),
   ]);
@@ -207,6 +217,22 @@ export default async function DashboardPage() {
         <StatCardsSection
           initialConfigs={(statCardConfigs ?? []) as { position: number; config: { metricId: string; domain: string } }[]}
         />
+      </section>
+
+      {/* Customizable graph widgets */}
+      <section>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[0, 1].map((pos) => {
+            const row = (graphConfigs ?? []).find((c: { position: number; config: GraphConfig }) => c.position === pos);
+            return (
+              <ConfigurableGraph
+                key={pos}
+                position={pos}
+                initialConfig={row?.config ?? null}
+              />
+            );
+          })}
+        </div>
       </section>
 
       {/* Today's check-in + streak */}
