@@ -8,7 +8,7 @@
   --font-sans: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
 
   /* Brand accent */
-  --color-brand: var(--color-emerald-500);
+  --color-brand: var(--color-blue-500);
 
   /* Semantic surface colors (dark theme defaults) */
   --color-background: var(--color-zinc-950);

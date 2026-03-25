@@ -29,7 +29,7 @@ export function CheckInFAB() {
       className={`fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-95 ${
         done
           ? "bg-zinc-800 border border-zinc-700 hover:bg-zinc-700"
-          : "bg-emerald-500 hover:bg-emerald-400"
+          : "bg-blue-500 hover:bg-blue-400"
       }`}
     >
       {!done && (

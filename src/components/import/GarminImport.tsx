@@ -40,7 +40,7 @@ function DropZone({
       onClick={onClick}
       className={`flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed p-14 cursor-pointer transition-colors ${
         dragging
-          ? "border-emerald-500 bg-emerald-500/5"
+          ? "border-blue-500 bg-blue-500/5"
           : "border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800/40"
       }`}
     >
@@ -49,7 +49,7 @@ function DropZone({
       </div>
       <div className="text-center">
         <p className="text-sm font-medium text-zinc-200">
-          Drop your Garmin export <span className="text-emerald-400">.zip</span> here
+          Drop your Garmin export <span className="text-blue-400">.zip</span> here
         </p>
         <p className="text-xs text-zinc-500 mt-1">or click to browse</p>
       </div>
@@ -160,7 +160,7 @@ export function GarminImport() {
   if (step === "parsing") {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
         <p className="text-sm text-zinc-400">Parsing your Garmin export…</p>
       </div>
     );
@@ -169,7 +169,7 @@ export function GarminImport() {
   if (step === "importing") {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-3">
-        <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+        <Loader2 className="w-8 h-8 text-blue-400 animate-spin" />
         <p className="text-sm text-zinc-400">Importing data…</p>
       </div>
     );
@@ -227,7 +227,7 @@ export function GarminImport() {
           <button
             onClick={handleConfirm}
             disabled={total === 0}
-            className="flex-1 px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-950 text-sm font-semibold transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-lg bg-blue-500 hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-950 text-sm font-semibold transition-colors"
           >
             Import {total} record{total !== 1 ? "s" : ""}
           </button>

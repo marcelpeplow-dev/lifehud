@@ -117,7 +117,7 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const trendColor = trend === null ? "text-zinc-600"
     : trend === "flat" ? "text-zinc-500"
-    : trend === "up" ? "text-emerald-400" : "text-red-400";
+    : trend === "up" ? "text-blue-400" : "text-red-400";
 
   return (
     <>

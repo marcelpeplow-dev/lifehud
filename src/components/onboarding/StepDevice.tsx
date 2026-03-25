@@ -43,7 +43,7 @@ export function StepDevice({ onConnect, onSkip, onBack, connecting, error }: Pro
         type="button"
         onClick={onConnect}
         disabled={connecting}
-        className="w-full flex items-center justify-between px-5 py-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold transition-colors disabled:opacity-60"
+        className="w-full flex items-center justify-between px-5 py-4 rounded-xl bg-blue-500 hover:bg-blue-400 text-zinc-950 font-semibold transition-colors disabled:opacity-60"
       >
         <div className="flex items-center gap-2.5">
           {connecting ? (

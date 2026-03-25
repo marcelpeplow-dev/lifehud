@@ -32,7 +32,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
       aria-checked={on}
       onClick={() => onChange(!on)}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none ${
-        on ? "bg-emerald-500" : "bg-zinc-700"
+        on ? "bg-blue-500" : "bg-zinc-700"
       }`}
     >
       <span
@@ -178,7 +178,7 @@ export function ManualTrackingSection({ initialConfigs }: Props) {
       <div className="h-5 flex items-center">
         {saving && <p className="text-xs text-zinc-500">Saving…</p>}
         {!saving && savedAt && (
-          <p className="text-xs text-emerald-500">Saved</p>
+          <p className="text-xs text-blue-500">Saved</p>
         )}
       </div>
     </div>

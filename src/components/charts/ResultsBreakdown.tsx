@@ -32,7 +32,7 @@ export function ResultsBreakdown({ data }: ResultsBreakdownProps) {
             <div className="flex h-3 rounded-full overflow-hidden bg-zinc-800">
               {winPct > 0 && (
                 <div
-                  className="bg-emerald-500 transition-all"
+                  className="bg-blue-500 transition-all"
                   style={{ width: `${winPct}%` }}
                   title={`${winPct}% wins`}
                 />
@@ -54,7 +54,7 @@ export function ResultsBreakdown({ data }: ResultsBreakdownProps) {
             </div>
             <div className="flex items-center gap-4 mt-1.5 text-xs text-zinc-400">
               <span className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
                 {winPct}% W
               </span>
               <span className="flex items-center gap-1">

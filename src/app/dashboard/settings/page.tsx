@@ -115,16 +115,16 @@ export default async function SettingsPage({
 
       {/* Device connected banner */}
       {connected === "1" && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-sm text-emerald-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-400">
+          <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
           Device connected successfully. Data will sync automatically.
         </div>
       )}
 
       {/* Fitbit connected banner */}
       {connected === "fitbit" && (
-        <div className="flex items-center gap-3 px-4 py-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-sm text-emerald-400">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+        <div className="flex items-center gap-3 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-400">
+          <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
           Fitbit connected! Your data is syncing now.
         </div>
       )}

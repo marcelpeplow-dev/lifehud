@@ -18,7 +18,7 @@ export function TrendIndicator({ direction, label, positive }: TrendIndicatorPro
     direction === "flat"
       ? "text-zinc-500"
       : isGood
-      ? "text-emerald-400"
+      ? "text-blue-400"
       : "text-red-400";
 
   const Icon =

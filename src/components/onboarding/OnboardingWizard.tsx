@@ -29,7 +29,7 @@ function StepDots({ current, total }: { current: number; total: number }) {
         <div
           key={i}
           className={`h-1.5 rounded-full transition-all ${
-            i === current ? "w-6 bg-emerald-500" : i < current ? "w-3 bg-emerald-500/50" : "w-3 bg-zinc-700"
+            i === current ? "w-6 bg-blue-500" : i < current ? "w-3 bg-blue-500/50" : "w-3 bg-zinc-700"
           }`}
         />
       ))}
@@ -99,7 +99,7 @@ export function OnboardingWizard() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
             <Activity className="w-4 h-4 text-zinc-950" />
           </div>
           <span className="text-sm font-semibold text-zinc-50">Life HUD</span>

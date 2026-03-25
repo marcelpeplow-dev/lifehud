@@ -57,8 +57,8 @@ export default async function DailyInputPage() {
   return (
     <div className="max-w-lg space-y-5">
       <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center">
-          <ClipboardList className="w-5 h-5 text-emerald-400" />
+        <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+          <ClipboardList className="w-5 h-5 text-blue-400" />
         </div>
         <div>
           <h1 className="text-xl font-semibold text-zinc-50 tracking-tight">Daily Input</h1>

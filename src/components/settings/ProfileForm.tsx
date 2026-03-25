@@ -15,7 +15,7 @@ interface ProfileFormProps {
 }
 
 const inputCls =
-  "w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 transition-colors";
+  "w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-blue-500 transition-colors";
 
 export function ProfileForm({ userId, initial }: ProfileFormProps) {
   const [form, setForm] = useState({
@@ -110,11 +110,11 @@ export function ProfileForm({ userId, initial }: ProfileFormProps) {
         <button
           type="submit"
           disabled={status === "saving" || !form.display_name.trim()}
-          className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold transition-colors disabled:opacity-50"
+          className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-zinc-950 text-sm font-semibold transition-colors disabled:opacity-50"
         >
           {status === "saving" ? "Saving…" : "Save changes"}
         </button>
-        {status === "saved" && <p className="text-xs text-emerald-400">Saved</p>}
+        {status === "saved" && <p className="text-xs text-blue-400">Saved</p>}
         {status === "error" && <p className="text-xs text-red-400">Failed to save</p>}
       </div>
     </form>

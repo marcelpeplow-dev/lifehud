@@ -525,7 +525,7 @@ export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
                   <div className="flex gap-2">
                     <button
                       onClick={handleShare}
-                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-zinc-950 text-sm font-semibold transition-colors"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       Share

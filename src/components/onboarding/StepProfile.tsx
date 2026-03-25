@@ -23,7 +23,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const inputCls = "w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-emerald-500";
+const inputCls = "w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-blue-500";
 
 export function StepProfile({ data, onChange, onNext }: Props) {
   function set(field: keyof ProfileData, value: string) {
@@ -101,7 +101,7 @@ export function StepProfile({ data, onChange, onNext }: Props) {
       <button
         type="submit"
         disabled={!data.display_name.trim()}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold transition-colors disabled:opacity-40"
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 hover:bg-blue-400 text-zinc-950 font-semibold transition-colors disabled:opacity-40"
       >
         Continue <ArrowRight className="w-4 h-4" />
       </button>

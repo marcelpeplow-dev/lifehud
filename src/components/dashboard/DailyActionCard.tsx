@@ -31,7 +31,7 @@ export function DailyActionCard({ initial }: DailyActionCardProps) {
     return (
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Zap className="w-4 h-4 text-emerald-400 shrink-0" />
+          <Zap className="w-4 h-4 text-blue-400 shrink-0" />
           <p className="text-sm text-zinc-500">No daily action yet — generate insights to unlock coaching.</p>
         </div>
         <button
@@ -47,13 +47,13 @@ export function DailyActionCard({ initial }: DailyActionCardProps) {
   }
 
   return (
-    <div className="bg-emerald-950/30 border border-emerald-900/50 rounded-xl p-5">
+    <div className="bg-blue-950/30 border border-blue-900/50 rounded-xl p-5">
       <div className="flex items-start gap-3">
-        <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center shrink-0 mt-0.5">
-          <Zap className="w-3.5 h-3.5 text-emerald-400" />
+        <div className="w-7 h-7 rounded-full bg-blue-500/20 flex items-center justify-center shrink-0 mt-0.5">
+          <Zap className="w-3.5 h-3.5 text-blue-400" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider mb-1">
+          <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">
             Today&apos;s focus
           </p>
           <p className="text-sm text-zinc-100 leading-relaxed">{action.text}</p>

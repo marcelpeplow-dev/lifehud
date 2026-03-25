@@ -46,7 +46,7 @@ export function Sidebar() {
         <Icon
           className={`w-4 h-4 shrink-0 transition-colors ${
             active
-              ? (iconColorClass ?? "text-emerald-400")
+              ? (iconColorClass ?? "text-blue-400")
               : "text-zinc-500 group-hover:text-zinc-300"
           }`}
         />
@@ -65,7 +65,7 @@ export function Sidebar() {
     <aside className="hidden md:flex flex-col w-60 shrink-0 bg-zinc-900 border-r border-zinc-800 h-screen sticky top-0">
       {/* Brand */}
       <div className="flex items-center gap-2.5 px-5 h-16 border-b border-zinc-800">
-        <div className="w-7 h-7 rounded-md bg-emerald-500 flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 rounded-md bg-blue-500 flex items-center justify-center shrink-0">
           <Activity className="w-3.5 h-3.5 text-zinc-950" strokeWidth={2.5} />
         </div>
         <span className="font-semibold text-zinc-50 tracking-tight">Life HUD</span>

@@ -124,7 +124,7 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
                 value={form.title}
                 onChange={(e) => set("title", e.target.value)}
                 placeholder="e.g. Sleep 8 hours per night"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
               />
             </div>
 
@@ -134,7 +134,7 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
                 <select
                   value={form.category}
                   onChange={(e) => set("category", e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:border-blue-500"
                 >
                   <option value="sleep">Sleep</option>
                   <option value="fitness">Fitness</option>
@@ -147,7 +147,7 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
                 <select
                   value={form.target_frequency}
                   onChange={(e) => set("target_frequency", e.target.value)}
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:border-blue-500"
                 >
                   <option value="daily">Daily</option>
                   <option value="weekly">Weekly</option>
@@ -169,7 +169,7 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
                     target_frequency: opt?.frequency ?? f.target_frequency,
                   }));
                 }}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:border-blue-500"
               >
                 <option value="">Select a metric…</option>
                 {METRIC_OPTIONS.map((m) => (
@@ -187,7 +187,7 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
                   onChange={(e) => set("target_value", e.target.value)}
                   placeholder="e.g. 480"
                   min="0"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
                 />
               </div>
               <div>
@@ -197,7 +197,7 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
                   value={form.target_unit}
                   onChange={(e) => set("target_unit", e.target.value)}
                   placeholder="e.g. min, steps"
-                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:border-blue-500"
                 />
               </div>
             </div>
@@ -208,7 +208,7 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
                 type="date"
                 value={form.target_date}
                 onChange={(e) => set("target_date", e.target.value)}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:border-emerald-500"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 focus:outline-none focus:border-blue-500"
               />
             </div>
 
@@ -217,7 +217,7 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
             <button
               type="submit"
               disabled={saving}
-              className="w-full py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold transition-colors disabled:opacity-50"
+              className="w-full py-2.5 rounded-lg bg-blue-500 hover:bg-blue-400 text-zinc-950 text-sm font-semibold transition-colors disabled:opacity-50"
             >
               {saving ? "Saving…" : "Add goal"}
             </button>

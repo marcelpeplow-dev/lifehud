@@ -95,7 +95,7 @@ export default async function CheckInsPage({
           label="Avg mood"
           value={avgMood != null ? avgMood.toFixed(1) : "—"}
           sub={rangeLabel}
-          color={avgMood != null ? (avgMood >= 7 ? "text-emerald-400" : avgMood >= 5 ? "text-amber-400" : "text-red-400") : "text-zinc-50"}
+          color={avgMood != null ? (avgMood >= 7 ? "text-blue-400" : avgMood >= 5 ? "text-amber-400" : "text-red-400") : "text-zinc-50"}
         />
         <StatCard
           label="Avg energy"
@@ -107,13 +107,13 @@ export default async function CheckInsPage({
           label="Avg stress"
           value={avgStress != null ? avgStress.toFixed(1) : "—"}
           sub={`${rangeLabel} · lower is better`}
-          color={avgStress != null ? (avgStress <= 4 ? "text-emerald-400" : avgStress <= 6 ? "text-amber-400" : "text-red-400") : "text-zinc-50"}
+          color={avgStress != null ? (avgStress <= 4 ? "text-blue-400" : avgStress <= 6 ? "text-amber-400" : "text-red-400") : "text-zinc-50"}
         />
         <StatCard
           label="Check-in streak"
           value={streak > 0 ? `${streak} day${streak !== 1 ? "s" : ""}` : "—"}
           sub={streak >= 7 ? "🔥 On a roll!" : streak > 0 ? "Keep it up" : "No streak yet"}
-          color={streak >= 7 ? "text-emerald-400" : "text-zinc-50"}
+          color={streak >= 7 ? "text-blue-400" : "text-zinc-50"}
         />
       </section>
 
@@ -153,7 +153,7 @@ export default async function CheckInsPage({
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <ScoreDot value={c.mood} color="bg-emerald-500/15 text-emerald-400" />
+                  <ScoreDot value={c.mood} color="bg-blue-500/15 text-blue-400" />
                   <ScoreDot value={c.energy} color="bg-amber-500/15 text-amber-400" />
                   <ScoreDot value={c.stress} color="bg-red-500/15 text-red-400" />
                 </div>

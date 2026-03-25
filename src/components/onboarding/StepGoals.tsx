@@ -96,7 +96,7 @@ export function StepGoals({ data, onChange, onNext, onBack }: Props) {
         <button
           type="button"
           onClick={onNext}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 hover:bg-blue-400 text-zinc-950 font-semibold transition-colors"
         >
           Continue <ArrowRight className="w-4 h-4" />
         </button>

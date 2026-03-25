@@ -75,7 +75,7 @@ export function LoginForm({ urlError }: { urlError?: string }) {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center">
             <Activity className="w-4 h-4 text-zinc-950" strokeWidth={2.5} />
           </div>
           <span className="text-xl font-semibold text-zinc-50">Life HUD</span>
@@ -120,7 +120,7 @@ export function LoginForm({ urlError }: { urlError?: string }) {
                 required
                 autoComplete="email"
                 placeholder="you@example.com"
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
 
@@ -134,7 +134,7 @@ export function LoginForm({ urlError }: { urlError?: string }) {
                 autoComplete={mode === "signup" ? "new-password" : "current-password"}
                 placeholder="••••••••"
                 minLength={8}
-                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-sm text-zinc-50 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
 
@@ -145,7 +145,7 @@ export function LoginForm({ urlError }: { urlError?: string }) {
             )}
 
             {successMessage && (
-              <p className="text-sm text-emerald-400 bg-emerald-950/50 border border-emerald-900 rounded-lg px-3 py-2">
+              <p className="text-sm text-blue-400 bg-blue-950/50 border border-blue-900 rounded-lg px-3 py-2">
                 {successMessage}
               </p>
             )}
@@ -153,7 +153,7 @@ export function LoginForm({ urlError }: { urlError?: string }) {
             <button
               type="submit"
               disabled={loading || googleLoading}
-              className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-950 font-semibold rounded-lg px-4 py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
+              className="w-full bg-blue-500 hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-950 font-semibold rounded-lg px-4 py-2.5 text-sm transition-colors flex items-center justify-center gap-2"
             >
               {loading && <Loader2 className="w-4 h-4 animate-spin" />}
               {mode === "signin" ? "Sign in" : "Create account"}
@@ -167,7 +167,7 @@ export function LoginForm({ urlError }: { urlError?: string }) {
                 Don&apos;t have an account?{" "}
                 <button
                   onClick={() => { setMode("signup"); setError(null); setSuccessMessage(null); }}
-                  className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                  className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
                 >
                   Sign up
                 </button>
@@ -177,7 +177,7 @@ export function LoginForm({ urlError }: { urlError?: string }) {
                 Already have an account?{" "}
                 <button
                   onClick={() => { setMode("signin"); setError(null); setSuccessMessage(null); }}
-                  className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors"
+                  className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
                 >
                   Sign in
                 </button>

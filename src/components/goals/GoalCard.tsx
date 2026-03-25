@@ -53,7 +53,7 @@ export function GoalCard({ goal, currentValue }: GoalCardProps) {
         </div>
         <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-emerald-500 rounded-full transition-all"
+            className="h-full bg-blue-500 rounded-full transition-all"
             style={{ width: `${pct}%` }}
           />
         </div>

@@ -204,7 +204,7 @@ export function GraphBuilderModal({ position, initialConfig, onSave, onClose, co
                           </div>
                           <div className="flex items-center gap-2 shrink-0 ml-3">
                             <span className="text-xs text-zinc-600">{metric.unitLabel}</span>
-                            {isSelected && <Check className="w-4 h-4 text-emerald-400" />}
+                            {isSelected && <Check className="w-4 h-4 text-blue-400" />}
                           </div>
                         </button>
                       );
@@ -227,7 +227,7 @@ export function GraphBuilderModal({ position, initialConfig, onSave, onClose, co
                   onClick={() => setChartType(type)}
                   className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all ${chartType === type ? "bg-zinc-700 border-zinc-500" : "bg-zinc-800/50 border-zinc-700 hover:border-zinc-600"}`}
                 >
-                  <Icon className={`w-6 h-6 ${chartType === type ? "text-emerald-400" : "text-zinc-400"}`} />
+                  <Icon className={`w-6 h-6 ${chartType === type ? "text-blue-400" : "text-zinc-400"}`} />
                   <span className="text-sm font-medium text-zinc-200">{label}</span>
                   <span className="text-xs text-zinc-500">{desc}</span>
                 </button>
@@ -278,7 +278,7 @@ export function GraphBuilderModal({ position, initialConfig, onSave, onClose, co
             <button
               onClick={handleSave}
               disabled={selectedMetrics.length === 0}
-              className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-zinc-950 text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Save chart
             </button>

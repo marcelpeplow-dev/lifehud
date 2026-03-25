@@ -128,7 +128,7 @@ export function InsightCard({ insight }: InsightCardProps) {
     >
       {/* Unread dot */}
       {!insight.is_read && (
-        <span className="absolute top-4 right-10 w-1.5 h-1.5 rounded-full bg-emerald-400" />
+        <span className="absolute top-4 right-10 w-1.5 h-1.5 rounded-full bg-blue-400" />
       )}
 
       {/* Dismiss button */}

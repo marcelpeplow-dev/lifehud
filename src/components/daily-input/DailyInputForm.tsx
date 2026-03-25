@@ -115,7 +115,7 @@ export function DailyInputForm({ enabledMetrics, initialValues, initialJournal, 
     return (
       <div className="text-center py-16 text-zinc-500">
         <p className="text-sm">No metrics enabled yet.</p>
-        <p className="text-xs mt-1">Enable domains in <a href="/dashboard/settings" className="text-emerald-400 underline">Settings → Manual Tracking</a>.</p>
+        <p className="text-xs mt-1">Enable domains in <a href="/dashboard/settings" className="text-blue-400 underline">Settings → Manual Tracking</a>.</p>
       </div>
     );
   }
@@ -132,7 +132,7 @@ export function DailyInputForm({ enabledMetrics, initialValues, initialJournal, 
         </div>
         <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
           <div
-            className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+            className="h-full bg-blue-500 rounded-full transition-all duration-300"
             style={{ width: totalMetrics > 0 ? `${(filledMetrics / totalMetrics) * 100}%` : "0%" }}
           />
         </div>
@@ -175,7 +175,7 @@ export function DailyInputForm({ enabledMetrics, initialValues, initialJournal, 
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-sm font-semibold text-zinc-950 transition-colors"
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-sm font-semibold text-zinc-950 transition-colors"
       >
         {saved ? <Check className="w-4 h-4" /> : null}
         {saving ? "Saving…" : saved ? "Saved!" : `Save for ${format(new Date(date + "T12:00:00"), "MMMM d")}`}

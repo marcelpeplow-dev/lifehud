@@ -95,7 +95,7 @@ export default async function InsightsPage({
           <div className="flex items-center gap-2.5">
             <h1 className="text-2xl font-semibold text-zinc-50 tracking-tight">Insights</h1>
             {(unreadCount ?? 0) > 0 && (
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-500 text-zinc-950 text-xs font-bold">
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-500 text-zinc-950 text-xs font-bold">
                 {unreadCount}
               </span>
             )}

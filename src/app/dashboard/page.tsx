@@ -240,12 +240,12 @@ export default async function DashboardPage() {
         <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <SmilePlus className="w-4 h-4 text-emerald-400 shrink-0" />
+              <SmilePlus className="w-4 h-4 text-blue-400 shrink-0" />
               <div>
                 <p className="text-sm font-medium text-zinc-50">Today&apos;s check-in</p>
                 {todayCheckIn ? (
                   <p className="text-xs text-zinc-500 mt-0.5">
-                    Mood&nbsp;<span className="text-emerald-400 font-semibold">{todayCheckIn.mood}</span>
+                    Mood&nbsp;<span className="text-blue-400 font-semibold">{todayCheckIn.mood}</span>
                     &ensp;Energy&nbsp;<span className="text-amber-400 font-semibold">{todayCheckIn.energy}</span>
                     &ensp;Stress&nbsp;<span className="text-red-400 font-semibold">{todayCheckIn.stress}</span>
                   </p>
@@ -343,7 +343,7 @@ export default async function DashboardPage() {
                   </div>
                   <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-emerald-500 rounded-full transition-all"
+                      className="h-full bg-blue-500 rounded-full transition-all"
                       style={{ width: `${pct}%` }}
                     />
                   </div>

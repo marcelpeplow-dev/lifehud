@@ -34,7 +34,7 @@ export function DeviceCard({ device }: { device: DeviceConnection }) {
     <div className="flex items-center justify-between gap-4 p-4 bg-zinc-800/50 rounded-xl">
       <div className="flex items-center gap-3">
         <div className="w-9 h-9 rounded-lg bg-zinc-700 flex items-center justify-center">
-          <Wifi className="w-4 h-4 text-emerald-400" />
+          <Wifi className="w-4 h-4 text-blue-400" />
         </div>
         <div>
           <p className="text-sm font-medium text-zinc-50">{PROVIDER_LABELS[device.provider]}</p>

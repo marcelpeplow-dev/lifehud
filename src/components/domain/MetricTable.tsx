@@ -66,7 +66,7 @@ export function MetricTable({ domain }: MetricTableProps) {
         const noData = !hasAnyData(m);
         const trendIcon = m.trend === "up" ? TrendingUp : m.trend === "down" ? TrendingDown : Minus;
         const TrendIcon = trendIcon;
-        const trendColor = m.trend === "up" ? "text-emerald-400" : m.trend === "down" ? "text-red-400" : "text-zinc-600";
+        const trendColor = m.trend === "up" ? "text-blue-400" : m.trend === "down" ? "text-red-400" : "text-zinc-600";
 
         return (
           <div

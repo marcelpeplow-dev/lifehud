@@ -36,7 +36,7 @@ export function MetricInput({ metric, value, textValue, onChange, onTextChange }
           min={min} max={max} step={step}
           value={current}
           onChange={(e) => onChange(metric.id, Number(e.target.value))}
-          className="flex-1 h-1.5 appearance-none rounded-full bg-zinc-700 accent-emerald-500 cursor-pointer"
+          className="flex-1 h-1.5 appearance-none rounded-full bg-zinc-700 accent-blue-500 cursor-pointer"
         />
         <span className="text-sm font-semibold text-zinc-100 w-8 text-right tabular-nums">
           {Math.round(current)}
@@ -77,7 +77,7 @@ export function MetricInput({ metric, value, textValue, onChange, onTextChange }
         aria-checked={on}
         onClick={() => onChange(metric.id, on ? 0 : 1)}
         className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-          on ? "bg-emerald-500" : "bg-zinc-700"
+          on ? "bg-blue-500" : "bg-zinc-700"
         }`}
       >
         <span
@@ -98,7 +98,7 @@ export function MetricInput({ metric, value, textValue, onChange, onTextChange }
         onChange={(e) => {
           if (e.target.value) onChange(metric.id, timeToDecimal(e.target.value));
         }}
-        className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 [color-scheme:dark]"
+        className="bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-100 focus:outline-none focus:border-blue-500 [color-scheme:dark]"
       />
     );
   }
@@ -110,7 +110,7 @@ export function MetricInput({ metric, value, textValue, onChange, onTextChange }
         onChange={(e) => onTextChange?.(metric.id, e.target.value)}
         placeholder={cfg.placeholder ?? ""}
         rows={2}
-        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-emerald-500 resize-none"
+        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-blue-500 resize-none"
       />
     );
   }
@@ -124,7 +124,7 @@ export function MetricInput({ metric, value, textValue, onChange, onTextChange }
         value={current || ""}
         placeholder={cfg.placeholder ?? "0"}
         onChange={(e) => onChange(metric.id, Number(e.target.value))}
-        className="w-28 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-100 focus:outline-none focus:border-emerald-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        className="w-28 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-1.5 text-sm text-zinc-100 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
       />
       {metric.unitLabel !== "—" && (
         <span className="text-xs text-zinc-500">{metric.unitLabel}</span>

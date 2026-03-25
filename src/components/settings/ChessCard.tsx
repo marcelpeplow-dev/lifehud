@@ -81,7 +81,7 @@ export function ChessCard({ connection }: { connection: ChessConnection }) {
           <button
             onClick={syncNow}
             disabled={syncing}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-emerald-400 hover:bg-emerald-500/10 transition-colors disabled:opacity-40"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-zinc-300 hover:text-blue-400 hover:bg-blue-500/10 transition-colors disabled:opacity-40"
           >
             {syncing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
             {syncing ? "Syncing..." : "Sync now"}
@@ -108,7 +108,7 @@ export function ChessCard({ connection }: { connection: ChessConnection }) {
       )}
 
       {syncMessage && (
-        <p className={`text-xs ${syncMessage.startsWith("Synced") || syncMessage.startsWith("No new") ? "text-emerald-400" : "text-red-400"}`}>
+        <p className={`text-xs ${syncMessage.startsWith("Synced") || syncMessage.startsWith("No new") ? "text-blue-400" : "text-red-400"}`}>
           {syncMessage}
         </p>
       )}

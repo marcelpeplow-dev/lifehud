@@ -69,7 +69,7 @@ export function GenerateButton() {
           onClick={generate}
           disabled={state === "loading" || hasUnread}
           title={hasUnread ? "Open your existing pack first" : undefined}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-sm font-semibold transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-500 hover:bg-blue-400 text-zinc-950 text-sm font-semibold transition-colors disabled:opacity-50"
         >
           <Sparkles className="w-4 h-4" />
           {state === "loading" ? "Generating…" : hasUnread ? "Open pack" : "Generate new pack"}

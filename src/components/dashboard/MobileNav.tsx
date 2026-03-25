@@ -43,7 +43,7 @@ export function MobileNav() {
               href={href}
               className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg min-w-0 flex-1"
             >
-              <Icon className={`w-5 h-5 shrink-0 transition-colors ${active ? "text-emerald-400" : "text-zinc-500"}`} />
+              <Icon className={`w-5 h-5 shrink-0 transition-colors ${active ? "text-blue-400" : "text-zinc-500"}`} />
               <span className={`text-xs font-medium truncate transition-colors ${active ? "text-zinc-50" : "text-zinc-500"}`}>
                 {label}
               </span>
