@@ -12,6 +12,7 @@ import { ConnectLichessButton } from "@/components/settings/ConnectLichessButton
 import { getUser as getLichessUser } from "@/lib/lichess/client";
 import { SignOutButton } from "@/components/settings/SignOutButton";
 import { ManualTrackingSection } from "@/components/settings/ManualTrackingSection";
+import { ImportFlow } from "@/components/import/ImportFlow";
 import type { Profile, DeviceConnection } from "@/types/index";
 import { redirect } from "next/navigation";
 
@@ -28,6 +29,14 @@ function Section({ title, description, children }: {
       </div>
       {children}
     </section>
+  );
+}
+
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-semibold text-zinc-600 uppercase tracking-widest pt-2">
+      {children}
+    </p>
   );
 }
 
@@ -70,7 +79,6 @@ export default async function SettingsPage({
   const devices = (devicesData ?? []) as DeviceConnection[];
   const fitbitIntegration = fitbitData as FitbitIntegration | null;
 
-  // Fetch Chess.com ratings if connected
   let chessStats: { rapid: number | null; blitz: number | null; bullet: number | null } | null = null;
   if (profile?.chess_username) {
     try {
@@ -81,12 +89,10 @@ export default async function SettingsPage({
         bullet: stats.chess_bullet?.last?.rating ?? null,
       };
     } catch {
-      // If Chess.com API fails, show card without ratings
       chessStats = { rapid: null, blitz: null, bullet: null };
     }
   }
 
-  // Fetch Lichess ratings if connected
   let lichessStats: { rapid: number | null; blitz: number | null; bullet: number | null } | null = null;
   if (profile?.lichess_username) {
     try {
@@ -113,23 +119,19 @@ export default async function SettingsPage({
         <p className="text-sm text-zinc-400 mt-0.5">Manage your profile, devices, and account</p>
       </div>
 
-      {/* Device connected banner */}
+      {/* Banners */}
       {connected === "1" && (
         <div className="flex items-center gap-3 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-400">
           <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
           Device connected successfully. Data will sync automatically.
         </div>
       )}
-
-      {/* Fitbit connected banner */}
       {connected === "fitbit" && (
         <div className="flex items-center gap-3 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-400">
           <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
           Fitbit connected! Your data is syncing now.
         </div>
       )}
-
-      {/* Fitbit error banner */}
       {fitbitError && (
         <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400">
           <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
@@ -138,10 +140,7 @@ export default async function SettingsPage({
       )}
 
       {/* Profile */}
-      <Section
-        title="Profile"
-        description="Your personal details used for personalized coaching."
-      >
+      <Section title="Profile" description="Your personal details used for personalized coaching.">
         <ProfileForm
           userId={user.id}
           initial={{
@@ -154,11 +153,11 @@ export default async function SettingsPage({
         />
       </Section>
 
-      {/* Fitbit Integration */}
-      <Section
-        title="Fitbit"
-        description="Connect your Fitbit account to sync sleep, activity, and heart rate data."
-      >
+      {/* ── Data Sources ──────────────────────────────────────── */}
+      <GroupLabel>Data Sources</GroupLabel>
+
+      {/* Fitbit */}
+      <Section title="Fitbit" description="Connect your Fitbit account to sync sleep, activity, and heart rate data.">
         {fitbitIntegration ? (
           <FitbitCard integration={fitbitIntegration} />
         ) : (
@@ -172,10 +171,7 @@ export default async function SettingsPage({
       </Section>
 
       {/* Chess.com */}
-      <Section
-        title="Chess.com"
-        description="Connect your Chess.com account to track ratings and discover cross-domain patterns."
-      >
+      <Section title="Chess.com" description="Connect your Chess.com account to track ratings and discover cross-domain patterns.">
         {profile?.chess_username && chessStats ? (
           <ChessCard
             connection={{
@@ -191,10 +187,7 @@ export default async function SettingsPage({
       </Section>
 
       {/* Lichess */}
-      <Section
-        title="Lichess"
-        description="Connect your Lichess account to track ratings and discover cross-domain patterns."
-      >
+      <Section title="Lichess" description="Connect your Lichess account to track ratings and discover cross-domain patterns.">
         {profile?.lichess_username && lichessStats ? (
           <LichessCard
             connection={{
@@ -208,11 +201,8 @@ export default async function SettingsPage({
         )}
       </Section>
 
-      {/* Other Devices (Terra) */}
-      <Section
-        title="Other devices"
-        description="Connect other wearables via Terra."
-      >
+      {/* Other Devices */}
+      <Section title="Other devices" description="Connect other wearables via Terra.">
         <div className="space-y-3">
           {devices.length > 0 ? (
             devices.map((device) => <DeviceCard key={device.id} device={device} />)
@@ -225,15 +215,22 @@ export default async function SettingsPage({
         </div>
       </Section>
 
-      {/* Manual Tracking */}
+      {/* CSV Import */}
       <Section
-        title="Manual Tracking"
-        description="Choose which domains you want to log manually each day."
+        title="Import data"
+        description="Import historical data from Garmin, Fitbit, or Apple Health CSV exports."
       >
+        <ImportFlow />
+      </Section>
+
+      {/* Manual Tracking */}
+      <Section title="Manual Tracking" description="Choose which domains you want to log manually each day.">
         <ManualTrackingSection initialConfigs={manualConfigData ?? []} />
       </Section>
 
-      {/* Account */}
+      {/* ── Account ───────────────────────────────────────────── */}
+      <GroupLabel>Account</GroupLabel>
+
       <Section title="Account">
         <div className="flex items-center justify-between">
           <div>
