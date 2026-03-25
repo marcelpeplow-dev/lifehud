@@ -12,9 +12,11 @@ interface ConfigurableGraphProps {
   position: number;
   domain?: string | null;
   initialConfig?: GraphConfig | null;
+  configType?: string;
+  defaultDomain?: string;
 }
 
-export function ConfigurableGraph({ position, domain = null, initialConfig = null }: ConfigurableGraphProps) {
+export function ConfigurableGraph({ position, domain = null, initialConfig = null, configType = "graph", defaultDomain }: ConfigurableGraphProps) {
   const [config, setConfig] = useState<GraphConfig | null>(initialConfig);
   const [days, setDays] = useState<7 | 30 | 90>(initialConfig?.days ?? 30);
   const [seriesData, setSeriesData] = useState<Record<string, SeriesPoint[]>>({});
@@ -50,7 +52,7 @@ export function ConfigurableGraph({ position, domain = null, initialConfig = nul
     await fetch("/api/dashboard-config", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ config_type: "graph", position, domain: domain ?? null }),
+      body: JSON.stringify({ config_type: configType, position, domain: domain ?? null }),
     });
   }
 
@@ -78,6 +80,9 @@ export function ConfigurableGraph({ position, domain = null, initialConfig = nul
             position={position}
             onSave={handleSave}
             onClose={() => setShowBuilder(false)}
+            configType={configType}
+            pageDomain={domain}
+            defaultDomain={defaultDomain}
           />
         )}
       </>

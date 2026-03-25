@@ -3,13 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home,
-  Moon,
-  Dumbbell,
-  Sparkles,
-  Swords,
-  Target,
-  ClipboardList,
+  Home, Moon, Dumbbell, Crown,
+  Sparkles, Target, ClipboardList,
 } from "lucide-react";
 
 interface NavItem {
@@ -23,7 +18,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Overview", href: "/dashboard", icon: Home, exact: true },
   { label: "Sleep", href: "/dashboard/sleep", icon: Moon },
   { label: "Fitness", href: "/dashboard/fitness", icon: Dumbbell },
-  { label: "Chess", href: "/dashboard/chess", icon: Swords },
+  { label: "Chess", href: "/dashboard/chess", icon: Crown },
   { label: "Insights", href: "/dashboard/insights", icon: Sparkles },
   { label: "Goals", href: "/dashboard/goals", icon: Target },
   { label: "Daily", href: "/dashboard/daily-input", icon: ClipboardList },
@@ -48,16 +43,8 @@ export function MobileNav() {
               href={href}
               className="flex flex-col items-center gap-1 px-3 py-2 rounded-lg min-w-0 flex-1"
             >
-              <Icon
-                className={`w-5 h-5 shrink-0 transition-colors ${
-                  active ? "text-emerald-400" : "text-zinc-500"
-                }`}
-              />
-              <span
-                className={`text-xs font-medium truncate transition-colors ${
-                  active ? "text-zinc-50" : "text-zinc-500"
-                }`}
-              >
+              <Icon className={`w-5 h-5 shrink-0 transition-colors ${active ? "text-emerald-400" : "text-zinc-500"}`} />
+              <span className={`text-xs font-medium truncate transition-colors ${active ? "text-zinc-50" : "text-zinc-500"}`}>
                 {label}
               </span>
             </Link>

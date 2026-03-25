@@ -29,6 +29,9 @@ interface GraphBuilderModalProps {
   initialConfig?: GraphConfig | null;
   onSave: (config: GraphConfig) => void;
   onClose: () => void;
+  configType?: string;
+  pageDomain?: string | null;
+  defaultDomain?: string;
 }
 
 type Step = "metrics" | "chart_type" | "time_range" | "preview";
@@ -39,9 +42,9 @@ const CHART_TYPES: Array<{ type: ChartType; label: string; desc: string; Icon: R
   { type: "area", label: "Area", desc: "Cumulative view", Icon: AreaChart },
 ];
 
-export function GraphBuilderModal({ position, initialConfig, onSave, onClose }: GraphBuilderModalProps) {
+export function GraphBuilderModal({ position, initialConfig, onSave, onClose, configType = "graph", pageDomain = null, defaultDomain }: GraphBuilderModalProps) {
   const [step, setStep] = useState<Step>("metrics");
-  const [domainFilter, setDomainFilter] = useState<string | null>(null);
+  const [domainFilter, setDomainFilter] = useState<string | null>(defaultDomain ?? null);
   const [selectedMetrics, setSelectedMetrics] = useState<Array<{ metricId: string; domain: string }>>(initialConfig?.metrics ?? []);
   const [chartType, setChartType] = useState<ChartType>(initialConfig?.chartType ?? "line");
   const [days, setDays] = useState<7 | 30 | 90>(initialConfig?.days ?? 30);
@@ -87,7 +90,7 @@ export function GraphBuilderModal({ position, initialConfig, onSave, onClose }: 
     await fetch("/api/dashboard-config", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ config_type: "graph", position, domain: null, config }),
+      body: JSON.stringify({ config_type: configType, position, domain: pageDomain ?? null, config }),
     });
     onSave(config);
   }

@@ -36,12 +36,21 @@ const DOMAIN_BG_COLORS: Record<string, string> = {
 interface MetricPickerModalProps {
   onSelect: (metricId: string, domainId: string) => void;
   onClose: () => void;
+  lockedDomain?: string;
 }
 
-export function MetricPickerModal({ onSelect, onClose }: MetricPickerModalProps) {
-  const [step, setStep] = useState<"domain" | "metric">("domain");
-  const [selectedDomain, setSelectedDomain] = useState<DomainDefinition | null>(null);
-  const [metrics, setMetrics] = useState<MetricDefinition[]>([]);
+export function MetricPickerModal({ onSelect, onClose, lockedDomain }: MetricPickerModalProps) {
+  const lockedDomainDef = lockedDomain
+    ? (DOMAIN_REGISTRY.find((d) => d.id === lockedDomain) ?? null)
+    : null;
+
+  const [step, setStep] = useState<"domain" | "metric">(lockedDomainDef ? "metric" : "domain");
+  const [selectedDomain, setSelectedDomain] = useState<DomainDefinition | null>(lockedDomainDef);
+  const [metrics, setMetrics] = useState<MetricDefinition[]>(
+    lockedDomainDef
+      ? getMetricsByDomain(lockedDomainDef.id).filter((m) => m.inputType !== "text")
+      : []
+  );
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -75,7 +84,7 @@ export function MetricPickerModal({ onSelect, onClose }: MetricPickerModalProps)
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-800 shrink-0">
           <div className="flex items-center gap-2">
-            {step === "metric" && (
+            {step === "metric" && !lockedDomain && (
               <button
                 onClick={() => setStep("domain")}
                 className="p-1 rounded-lg text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800 transition-colors"

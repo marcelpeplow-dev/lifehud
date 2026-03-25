@@ -33,9 +33,11 @@ interface ConfigurableStatCardProps {
   position: number;
   domain?: string | null;
   initialConfig?: StatCardConfig | null;
+  configType?: string;
+  lockedDomain?: string;
 }
 
-export function ConfigurableStatCard({ position, domain = null, initialConfig = null }: ConfigurableStatCardProps) {
+export function ConfigurableStatCard({ position, domain = null, initialConfig = null, configType = "stat_card", lockedDomain }: ConfigurableStatCardProps) {
   const [config, setConfig] = useState<StatCardConfig | null>(initialConfig);
   const [value, setValue] = useState<string | null>(null);
   const [trend, setTrend] = useState<"up" | "down" | "flat" | null>(null);
@@ -71,7 +73,7 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        config_type: "stat_card",
+        config_type: configType,
         position,
         domain: domain ?? null,
         config: newConfig,
@@ -88,7 +90,7 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
     await fetch("/api/dashboard-config", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ config_type: "stat_card", position, domain: domain ?? null }),
+      body: JSON.stringify({ config_type: configType, position, domain: domain ?? null }),
     });
   }
 
@@ -102,7 +104,7 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
           <Plus className="w-5 h-5 text-zinc-600 group-hover:text-zinc-400 transition-colors" />
           <span className="text-xs text-zinc-600 group-hover:text-zinc-400 transition-colors">Add metric</span>
         </button>
-        {showPicker && <MetricPickerModal onSelect={handleSelect} onClose={() => setShowPicker(false)} />}
+        {showPicker && <MetricPickerModal onSelect={handleSelect} onClose={() => setShowPicker(false)} lockedDomain={lockedDomain} />}
       </>
     );
   }
@@ -171,7 +173,7 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
         )}
       </div>
 
-      {showPicker && <MetricPickerModal onSelect={handleSelect} onClose={() => setShowPicker(false)} />}
+      {showPicker && <MetricPickerModal onSelect={handleSelect} onClose={() => setShowPicker(false)} lockedDomain={lockedDomain} />}
     </>
   );
 }

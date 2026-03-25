@@ -1,54 +1,65 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
-  Activity,
-  Home,
-  Moon,
-  Dumbbell,
-  Sparkles,
-  Target,
-  ClipboardList,
-  Swords,
-  Settings,
-  LogOut,
-  Upload,
+  Activity, Home, Moon, Dumbbell, Crown,
+  Sparkles, Target, ClipboardList, Settings,
 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
+import { DOMAIN_REGISTRY } from "@/lib/metrics/domains";
 
-interface NavItem {
-  label: string;
-  href: string;
-  icon: React.ComponentType<{ className?: string }>;
-  exact?: boolean;
-}
+const DOMAIN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+  moon: Moon, dumbbell: Dumbbell, crown: Crown, heart: Activity,
+  activity: Activity, coffee: Activity, droplets: Activity,
+  pill: Activity, monitor: Activity, wine: Activity,
+};
 
-const NAV_ITEMS: NavItem[] = [
-  { label: "Overview", href: "/dashboard", icon: Home, exact: true },
-  { label: "Sleep", href: "/dashboard/sleep", icon: Moon },
-  { label: "Fitness", href: "/dashboard/fitness", icon: Dumbbell },
-  { label: "Chess", href: "/dashboard/chess", icon: Swords },
-  { label: "Daily Input", href: "/dashboard/daily-input", icon: ClipboardList },
-  { label: "Insights", href: "/dashboard/insights", icon: Sparkles },
-  { label: "Goals", href: "/dashboard/goals", icon: Target },
-];
+// Only show these 3 domains in nav for now (others visible on settings)
+const NAV_DOMAINS = ["sleep", "fitness", "chess"];
+
+const DOMAIN_TEXT_COLORS: Record<string, string> = {
+  "blue-400": "text-blue-400", "green-400": "text-green-400",
+  "amber-400": "text-amber-400", "rose-400": "text-rose-400",
+  "emerald-400": "text-emerald-400", "orange-400": "text-orange-400",
+  "cyan-400": "text-cyan-400", "purple-400": "text-purple-400",
+  "indigo-400": "text-indigo-400", "red-400": "text-red-400",
+};
 
 export function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
 
   function isActive(href: string, exact?: boolean) {
     if (exact) return pathname === href;
     return pathname.startsWith(href);
   }
 
-  async function handleSignOut() {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
+  function navLink(href: string, Icon: React.ComponentType<{ className?: string }>, label: string, exact?: boolean, iconColorClass?: string) {
+    const active = isActive(href, exact);
+    return (
+      <Link
+        key={href}
+        href={href}
+        className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group ${
+          active ? "bg-zinc-800 text-zinc-50" : "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/60"
+        }`}
+      >
+        <Icon
+          className={`w-4 h-4 shrink-0 transition-colors ${
+            active
+              ? (iconColorClass ?? "text-emerald-400")
+              : "text-zinc-500 group-hover:text-zinc-300"
+          }`}
+        />
+        {label}
+      </Link>
+    );
   }
+
+  const sectionLabel = (text: string) => (
+    <p className="px-3 pt-4 pb-1 text-[10px] font-semibold text-zinc-600 uppercase tracking-widest">
+      {text}
+    </p>
+  );
 
   return (
     <aside className="hidden md:flex flex-col w-60 shrink-0 bg-zinc-900 border-r border-zinc-800 h-screen sticky top-0">
@@ -57,83 +68,41 @@ export function Sidebar() {
         <div className="w-7 h-7 rounded-md bg-emerald-500 flex items-center justify-center shrink-0">
           <Activity className="w-3.5 h-3.5 text-zinc-950" strokeWidth={2.5} />
         </div>
-        <span className="font-semibold text-zinc-50 tracking-tight">
-          Life HUD
-        </span>
+        <span className="font-semibold text-zinc-50 tracking-tight">Life HUD</span>
       </div>
 
-      {/* Main nav */}
-      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
-        {NAV_ITEMS.map(({ label, href, icon: Icon, exact }) => {
-          const active = isActive(href, exact);
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-2 overflow-y-auto">
+        {sectionLabel("Overview")}
+        {navLink("/dashboard", Home, "Overview", true)}
+
+        {sectionLabel("Domains")}
+        {DOMAIN_REGISTRY.filter((d) => NAV_DOMAINS.includes(d.id)).map((domain) => {
+          const Icon = DOMAIN_ICONS[domain.icon] ?? Activity;
+          const active = isActive(`/dashboard/${domain.id}`);
+          const iconColor = DOMAIN_TEXT_COLORS[domain.color] ?? "text-zinc-400";
           return (
             <Link
-              key={href}
-              href={href}
+              key={domain.id}
+              href={`/dashboard/${domain.id}`}
               className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group ${
-                active
-                  ? "bg-zinc-800 text-zinc-50"
-                  : "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/60"
+                active ? "bg-zinc-800 text-zinc-50" : "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/60"
               }`}
             >
-              <Icon
-                className={`w-4 h-4 shrink-0 transition-colors ${
-                  active
-                    ? "text-emerald-400"
-                    : "text-zinc-500 group-hover:text-zinc-300"
-                }`}
-              />
-              {label}
+              <Icon className={`w-4 h-4 shrink-0 transition-colors ${active ? iconColor : "text-zinc-500 group-hover:text-zinc-300"}`} />
+              {domain.name}
             </Link>
           );
         })}
+
+        {sectionLabel("Tools")}
+        {navLink("/dashboard/daily-input", ClipboardList, "Daily Input")}
+        {navLink("/dashboard/insights", Sparkles, "Insights")}
+        {navLink("/dashboard/goals", Target, "Goals")}
+
+        {sectionLabel("System")}
+        {navLink("/dashboard/settings", Settings, "Settings")}
       </nav>
-
-      {/* Bottom section */}
-      <div className="px-3 py-4 border-t border-zinc-800 space-y-0.5">
-        <Link
-          href="/dashboard/import"
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group ${
-            isActive("/dashboard/import")
-              ? "bg-zinc-800 text-zinc-50"
-              : "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/60"
-          }`}
-        >
-          <Upload
-            className={`w-4 h-4 shrink-0 transition-colors ${
-              isActive("/dashboard/import")
-                ? "text-emerald-400"
-                : "text-zinc-500 group-hover:text-zinc-300"
-            }`}
-          />
-          Import data
-        </Link>
-        <Link
-          href="/dashboard/settings"
-          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors group ${
-            isActive("/dashboard/settings")
-              ? "bg-zinc-800 text-zinc-50"
-              : "text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/60"
-          }`}
-        >
-          <Settings
-            className={`w-4 h-4 shrink-0 transition-colors ${
-              isActive("/dashboard/settings")
-                ? "text-emerald-400"
-                : "text-zinc-500 group-hover:text-zinc-300"
-            }`}
-          />
-          Settings
-        </Link>
-
-        <button
-          onClick={handleSignOut}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-zinc-400 hover:text-zinc-50 hover:bg-zinc-800/60 transition-colors group"
-        >
-          <LogOut className="w-4 h-4 shrink-0 text-zinc-500 group-hover:text-zinc-300 transition-colors" />
-          Sign out
-        </button>
-      </div>
     </aside>
   );
 }

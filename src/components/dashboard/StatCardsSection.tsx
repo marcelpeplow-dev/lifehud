@@ -15,9 +15,11 @@ interface DashboardConfigRow {
 interface StatCardsSectionProps {
   initialConfigs: DashboardConfigRow[];
   pageDomain?: string | null;
+  configType?: string;
+  lockedDomain?: string;
 }
 
-export function StatCardsSection({ initialConfigs, pageDomain = null }: StatCardsSectionProps) {
+export function StatCardsSection({ initialConfigs, pageDomain = null, configType, lockedDomain }: StatCardsSectionProps) {
   const configByPosition = new Map(initialConfigs.map((c) => [c.position, c.config]));
 
   return (
@@ -28,6 +30,8 @@ export function StatCardsSection({ initialConfigs, pageDomain = null }: StatCard
           position={pos}
           domain={pageDomain}
           initialConfig={configByPosition.get(pos) ?? null}
+          configType={configType}
+          lockedDomain={lockedDomain}
         />
       ))}
     </div>
