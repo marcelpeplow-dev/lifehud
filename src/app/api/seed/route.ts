@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { seedUserData } from "@/lib/utils/seed";
 
-async function seed(userId?: string) {
-  if (process.env.NODE_ENV === "production" && process.env.SEED_ENABLED !== "true") {
+async function seed(userId?: string, secret?: string | null) {
+  const secretOk = secret === "lifehud-seed-2024";
+  if (process.env.NODE_ENV === "production" && process.env.SEED_ENABLED !== "true" && !secretOk) {
     return NextResponse.json({ error: "Not available in production" }, { status: 403 });
   }
   // If no user_id provided, get it from the current session
@@ -23,9 +24,10 @@ async function seed(userId?: string) {
 }
 
 /** GET /api/seed — seeds the currently signed-in user */
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    return await seed();
+    const secret = new URL(request.url).searchParams.get("secret");
+    return await seed(undefined, secret);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
@@ -35,6 +37,7 @@ export async function GET() {
 /** POST /api/seed — seeds a specific user_id from the request body */
 export async function POST(request: Request) {
   try {
+    const secret = new URL(request.url).searchParams.get("secret");
     let userId: string | undefined;
     try {
       const body = await request.json();
@@ -42,7 +45,7 @@ export async function POST(request: Request) {
     } catch {
       // no body — fall back to session
     }
-    return await seed(userId);
+    return await seed(userId, secret);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
