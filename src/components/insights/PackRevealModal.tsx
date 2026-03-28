@@ -30,7 +30,7 @@ const PARTICLE_COUNT = 14;
 function ParticleBurst({ color, active }: { color: string; active: boolean }) {
   if (!active) return null;
   return (
-    <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 10 }}>
+    <div className="absolute inset-0 pointer-events-none z-10">
       {Array.from({ length: PARTICLE_COUNT }).map((_, i) => {
         const angle = (2 * Math.PI * i) / PARTICLE_COUNT;
         return (
@@ -94,8 +94,7 @@ function FlipCard({ insight, index, isRevealed, onReveal }: FlipCardProps) {
       }}
     >
       <motion.div
-        className={`[transform-style:preserve-3d] relative ${shaking ? "legendary-shake" : ""}`}
-        style={{ height: 260 }}
+        className={`[transform-style:preserve-3d] relative h-[260px] ${shaking ? "legendary-shake" : ""}`}
         animate={{ rotateY: isRevealed ? 180 : 0 }}
         transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
         onClick={handleReveal}

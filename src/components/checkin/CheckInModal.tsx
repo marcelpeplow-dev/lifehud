@@ -117,8 +117,8 @@ export function CheckInModal({ initialData, onClose, onSaved }: CheckInModalProp
     return (
       <div className={overlay}>
         <div className={`${panel} p-12 flex flex-col items-center gap-4`}>
-          <div className="w-16 h-16 rounded-full bg-emerald-500/10 flex items-center justify-center">
-            <CheckCircle className="w-8 h-8 text-emerald-400" />
+          <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center">
+            <CheckCircle className="w-8 h-8 text-blue-400" />
           </div>
           <p className="text-base font-semibold text-zinc-50">
             {initialData ? "Updated!" : "Logged!"}

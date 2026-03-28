@@ -3,15 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Activity, Home, Moon, Dumbbell, Crown,
+  Activity, Home, Moon, Dumbbell, Crown, Heart,
+  Coffee, Droplets, Monitor, Wine, Pill,
   Sparkles, Target, ClipboardList, Settings,
 } from "lucide-react";
 import { DOMAIN_REGISTRY } from "@/lib/metrics/domains";
 
 const DOMAIN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  moon: Moon, dumbbell: Dumbbell, crown: Crown, heart: Activity,
-  activity: Activity, coffee: Activity, droplets: Activity,
-  pill: Activity, monitor: Activity, wine: Activity,
+  moon: Moon, dumbbell: Dumbbell, crown: Crown, heart: Heart,
+  activity: Activity, coffee: Coffee, droplets: Droplets,
+  pill: Pill, monitor: Monitor, wine: Wine,
 };
 
 // Only show these 3 domains in nav for now (others visible on settings)

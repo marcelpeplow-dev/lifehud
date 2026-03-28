@@ -33,10 +33,10 @@ export function CheckInFAB() {
       }`}
     >
       {!done && (
-        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-25 animate-ping" />
+        <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-25 animate-ping" />
       )}
       {done ? (
-        <Check className="w-5 h-5 text-emerald-400" />
+        <Check className="w-5 h-5 text-zinc-50" />
       ) : (
         <ClipboardList className="w-6 h-6 text-zinc-950" />
       )}

@@ -43,9 +43,16 @@ export function DailyInputForm({ enabledMetrics, initialValues, initialJournal, 
     .filter((m) => !COVERED_IDS.has(m.metric_id))
     .flatMap((m) => { const d = getMetricById(m.metric_id); return d ? [d] : []; });
 
-  const progressIds = [...enabledSet].filter((id) => id !== "wellbeing_journal");
-  const totalMetrics = progressIds.length;
-  const filledMetrics = progressIds.filter((id) => values[id] != null).length;
+  // Section-level progress
+  const wellbeingComplete = hasWellbeing &&
+    WELLBEING_CORE.filter((id) => enabledSet.has(id)).every((id) => values[id] != null);
+  const totalSections =
+    (hasWellbeing ? 1 : 0) + activeBuckets.length + activeToggleIds.length + fallbackMetrics.length;
+  const completedSections =
+    (wellbeingComplete ? 1 : 0) +
+    activeBuckets.filter((bd) => values[bd.metricId] != null).length +
+    activeToggleIds.length +
+    fallbackMetrics.filter((m) => values[m.id] != null).length;
 
   const handleChange = useCallback((metricId: string, value: number) => {
     setValues((prev) => ({ ...prev, [metricId]: value }));
@@ -112,12 +119,12 @@ export function DailyInputForm({ enabledMetrics, initialValues, initialJournal, 
       <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-zinc-400">Today&apos;s progress</span>
-          <span className="text-xs font-medium text-zinc-300">{filledMetrics} / {totalMetrics}</span>
+          <span className="text-xs font-medium text-zinc-300">{completedSections} / {totalSections} sections</span>
         </div>
         <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
           <div
             className="h-full bg-blue-500 rounded-full transition-all duration-300"
-            style={{ width: totalMetrics > 0 ? `${(filledMetrics / totalMetrics) * 100}%` : "0%" }}
+            style={{ width: totalSections > 0 ? `${(completedSections / totalSections) * 100}%` : "0%" }}
           />
         </div>
       </div>
@@ -135,14 +142,18 @@ export function DailyInputForm({ enabledMetrics, initialValues, initialJournal, 
       )}
 
       {/* 2. Bucket selectors */}
-      {activeBuckets.map((bd) => (
-        <BucketSelector
-          key={bd.metricId}
-          domain={bd}
-          value={values[bd.metricId]}
-          onChange={handleChange}
-        />
-      ))}
+      {activeBuckets.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {activeBuckets.map((bd) => (
+            <BucketSelector
+              key={bd.metricId}
+              domain={bd}
+              value={values[bd.metricId]}
+              onChange={handleChange}
+            />
+          ))}
+        </div>
+      )}
 
       {/* 3. Toggles: supplements_taken, substances_cannabis */}
       {activeToggleIds.length > 0 && (
