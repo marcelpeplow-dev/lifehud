@@ -38,7 +38,7 @@ export function CheckInFAB() {
       {done ? (
         <Check className="w-5 h-5 text-zinc-50" />
       ) : (
-        <ClipboardList className="w-6 h-6 text-zinc-950" />
+        <ClipboardList className="w-6 h-6 text-white" />
       )}
     </Link>
   );
