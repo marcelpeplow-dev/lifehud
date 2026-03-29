@@ -4,6 +4,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { getGameArchives, getMonthlyGames, parseGame } from "@/lib/chess/client";
 import type { ParsedChessGame } from "@/lib/chess/client";
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
 /** POST /api/chess/sync — Sync Chess.com games for the authenticated user */
 export async function POST() {
   try {
@@ -48,7 +50,10 @@ export async function POST() {
     // Fetch games from each month (serially per Chess.com rate limit guidelines)
     const allParsedGames: ParsedChessGame[] = [];
 
-    for (const archiveUrl of recentArchives) {
+    for (let i = 0; i < recentArchives.length; i++) {
+      if (i > 0) await sleep(1500);
+
+      const archiveUrl = recentArchives[i];
       const parts = archiveUrl.split("/");
       const year = parseInt(parts[parts.length - 2], 10);
       const month = parseInt(parts[parts.length - 1], 10);
