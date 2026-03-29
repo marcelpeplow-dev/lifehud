@@ -52,7 +52,7 @@ export async function POST(
   const message = await client.messages.create({
     model: MODEL,
     max_tokens: 300,
-    system: "You are a personal health coach. Respond in second person (you/your). Use full words, not abbreviations. No em dashes. Be concise and direct.",
+    system: "You are a personal health coach. Respond in second person (you/your). Use full words, not abbreviations. No em dashes. Be concise and direct. If the insight does not contain enough real data to give a meaningful answer, respond with only the word: INSUFFICIENT_DATA",
     messages: [
       {
         role: "user",

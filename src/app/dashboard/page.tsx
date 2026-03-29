@@ -39,6 +39,7 @@ export default async function DashboardPage() {
     { data: allCheckInDates },
     { data: statCardConfigs },
     { data: graphConfigs },
+    { data: recentManualEntries },
   ] = await Promise.all([
     supabase
       .from("sleep_records")
@@ -117,6 +118,13 @@ export default async function DashboardPage() {
       .eq("config_type", "graph")
       .is("domain", null)
       .order("position"),
+    supabase
+      .from("manual_entries")
+      .select("date")
+      .eq("user_id", user.id)
+      .gte("date", sevenDaysAgo)
+      .order("date", { ascending: false })
+      .limit(1),
   ]);
 
   // ── Metric computations ──────────────────────────────────────────────────
@@ -176,7 +184,8 @@ export default async function DashboardPage() {
   // Last updated: most recent sleep, workout, or metric record
   const lastSleepDate = recentSleep?.[0]?.date ?? null;
   const lastMetricDate = recentMetrics?.[0]?.date ?? null;
-  const lastUpdatedDate = [lastSleepDate, lastMetricDate].filter(Boolean).sort().at(-1) ?? null;
+  const lastManualDate = recentManualEntries?.[0]?.date ?? null;
+  const lastUpdatedDate = [lastSleepDate, lastMetricDate, lastManualDate].filter(Boolean).sort().at(-1) ?? null;
 
   const todayCheckIn = todayCheckInData as CheckIn | null;
   const dailyAction = dailyActionData as DailyAction | null;

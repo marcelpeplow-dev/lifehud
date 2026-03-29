@@ -3,8 +3,8 @@ import type { InsightCategory, InsightRarity } from "@/types/index";
 
 // ── Domain icons (inline SVGs, 14–15px) ──────────────────────────────────────
 
-function DomainIconSvg({ category, legendary, size = 14 }: { category: InsightCategory; legendary?: boolean; size?: number }) {
-  const stroke = legendary ? "#CA8A04" : "#52525B";
+function DomainIconSvg({ category, legendary, size = 14, active }: { category: InsightCategory; legendary?: boolean; size?: number; active?: boolean }) {
+  const stroke = active ? "#ffffff" : legendary ? "#CA8A04" : "#52525B";
   const shared = { width: size, height: size, viewBox: "0 0 16 16", fill: "none", stroke, strokeWidth: 1.5, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
   switch (category) {
@@ -66,13 +66,13 @@ function DomainIconSvg({ category, legendary, size = 14 }: { category: InsightCa
   }
 }
 
-export function DomainIcon({ category, legendary, className, size }: { category: InsightCategory; legendary?: boolean; className?: string; size?: number }) {
+export function DomainIcon({ category, legendary, className, size, active }: { category: InsightCategory; legendary?: boolean; className?: string; size?: number; active?: boolean }) {
   return (
     <span
       className={cn("inline-flex items-center justify-center shrink-0", className)}
       style={{ background: "rgba(161,161,170,0.08)", borderRadius: 3, padding: 3 }}
     >
-      <DomainIconSvg category={category} legendary={legendary} size={size} />
+      <DomainIconSvg category={category} legendary={legendary} size={size} active={active} />
     </span>
   );
 }

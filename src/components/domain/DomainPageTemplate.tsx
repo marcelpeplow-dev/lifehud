@@ -99,7 +99,7 @@ export async function DomainPageTemplate({ domain, userId }: DomainPageTemplateP
 
       {/* Section 2: Configurable graphs */}
       <section>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 [&_svg]:outline-none [&_*:focus]:outline-none">
           {[0, 1].map((pos) => (
             <ConfigurableGraph
               key={pos}

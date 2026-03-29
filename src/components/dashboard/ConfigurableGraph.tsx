@@ -135,6 +135,7 @@ export function ConfigurableGraph({ position, domain = null, initialConfig = nul
             <p className="text-sm text-zinc-600">Loading…</p>
           </div>
         ) : (
+          <div className="outline-none [&_svg]:outline-none [&_*:focus]:outline-none">
           <GraphChart
             metricIds={metricIds}
             domainIds={domainIds}
@@ -143,6 +144,7 @@ export function ConfigurableGraph({ position, domain = null, initialConfig = nul
             days={days}
             height={200}
           />
+          </div>
         )}
       </div>
 

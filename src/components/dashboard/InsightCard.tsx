@@ -213,6 +213,8 @@ export function InsightCard({ insight }: InsightCardProps) {
               <div className="mt-3 p-3 bg-zinc-800/60 rounded-lg border border-zinc-700/50">
                 {askLoading ? (
                   <p className="text-xs text-zinc-500 animate-pulse">Thinking...</p>
+                ) : askResponse === "INSUFFICIENT_DATA" || (askResponse && askResponse.startsWith("Failed")) ? (
+                  <p className="text-xs text-zinc-500 italic text-center">Not enough data yet — keep logging!</p>
                 ) : (
                   <p className="text-sm text-zinc-300 leading-relaxed">{askResponse}</p>
                 )}

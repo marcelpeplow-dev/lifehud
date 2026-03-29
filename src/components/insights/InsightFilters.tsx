@@ -93,7 +93,7 @@ export function DomainFilter({ active }: { active: string }) {
                 : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800"
             }`}
           >
-            <DomainIcon category={d.category} className="opacity-80" size={12} />
+            <DomainIcon category={d.category} className={selected ? "" : "opacity-80"} size={12} active={selected} />
             {d.label}
           </button>
         );

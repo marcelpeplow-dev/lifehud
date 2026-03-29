@@ -126,11 +126,11 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
         onClick={() => setShowActions((s) => !s)}
       >
         {/* Domain icon + metric name */}
-        <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center justify-between mb-3">
           <span className="text-xs font-medium text-zinc-400 leading-tight pr-2">
             {metric?.shortName ?? config.metricId}
           </span>
-          {Icon && <Icon className={`w-4 h-4 shrink-0 ${iconColor}`} />}
+          {Icon && <Icon className="w-4 h-4 shrink-0 text-blue-400" />}
         </div>
 
         {/* Value */}
