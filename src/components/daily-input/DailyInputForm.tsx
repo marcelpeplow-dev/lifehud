@@ -91,6 +91,7 @@ export function DailyInputForm({ enabledMetrics, initialValues, initialJournal, 
       }
 
       setSaved(true);
+      window.dispatchEvent(new CustomEvent("daily-input-saved"));
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -196,10 +197,10 @@ export function DailyInputForm({ enabledMetrics, initialValues, initialJournal, 
       <button
         onClick={handleSave}
         disabled={saving}
-        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-sm font-semibold text-zinc-950 transition-colors"
+        className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-blue-500 hover:bg-blue-400 disabled:opacity-50 text-sm font-semibold text-white transition-colors"
       >
         {saved ? <Check className="w-4 h-4" /> : null}
-        {saving ? "Saving…" : saved ? "Saved!" : `Done for ${format(new Date(date + "T12:00:00"), "MMMM d")}`}
+        {saving ? "Saving…" : saved ? "Saved!" : `Done for ${format(new Date(date + "T12:00:00"), "MMMM d, yyyy")}`}
       </button>
     </div>
   );

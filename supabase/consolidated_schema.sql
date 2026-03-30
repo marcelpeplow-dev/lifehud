@@ -21,6 +21,7 @@ CREATE TABLE public.profiles (
   weight_kg             NUMERIC,
   timezone              TEXT         DEFAULT 'America/New_York',
   onboarding_completed  BOOLEAN      DEFAULT FALSE,
+  has_seen_tour         BOOLEAN      DEFAULT FALSE,
   -- Chess integrations
   chess_username        TEXT,
   last_chess_sync       TIMESTAMPTZ,

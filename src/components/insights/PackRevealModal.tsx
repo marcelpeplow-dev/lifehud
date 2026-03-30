@@ -376,7 +376,15 @@ interface PackRevealModalProps {
   onClose: () => void;
 }
 
+// Ascending rarity order for reveal: common first, legendary last
+const RARITY_REVEAL_ORDER: InsightRarity[] = ["common", "uncommon", "rare", "epic", "legendary"];
+
 export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
+  const sortedInsights = [...insights].sort(
+    (a, b) =>
+      RARITY_REVEAL_ORDER.indexOf(a.rarity ?? "common") -
+      RARITY_REVEAL_ORDER.indexOf(b.rarity ?? "common")
+  );
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [muted, setMuted] = useState(false);
   const [shareImages, setShareImages] = useState<{ story: string; hero: string } | null>(null);
@@ -384,7 +392,7 @@ export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
   const { playRarity } = useRevealSound(muted);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const allRevealed = revealed.size === insights.length;
+  const allRevealed = revealed.size === sortedInsights.length;
 
   const handleReveal = useCallback(
     async (insight: Insight) => {
@@ -462,7 +470,7 @@ export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
             <p className="text-xs text-zinc-500 mt-0.5">
               {allRevealed
                 ? "All insights revealed"
-                : `${insights.length - revealed.size} card${insights.length - revealed.size !== 1 ? "s" : ""} remaining — click to reveal`}
+                : `${sortedInsights.length - revealed.size} card${sortedInsights.length - revealed.size !== 1 ? "s" : ""} remaining — click to reveal`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -490,7 +498,7 @@ export function PackRevealModal({ insights, onClose }: PackRevealModalProps) {
             initial="hidden"
             animate="show"
           >
-            {insights.map((insight, i) => (
+            {sortedInsights.map((insight, i) => (
               <div key={insight.id} className="w-48 shrink-0">
                 <FlipCard
                   insight={insight}

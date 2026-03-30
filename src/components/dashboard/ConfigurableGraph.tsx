@@ -143,6 +143,7 @@ export function ConfigurableGraph({ position, domain = null, initialConfig = nul
             chartType={config.chartType}
             days={days}
             height={200}
+            onDaysChange={setDays}
           />
           </div>
         )}

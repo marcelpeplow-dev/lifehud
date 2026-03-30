@@ -15,7 +15,7 @@ export const DOMAIN_REGISTRY: DomainDefinition[] = [
     id: "sleep",
     name: "Sleep",
     icon: "moon",
-    color: "blue-400",
+    color: "indigo-400",
     source: "automated",
     description: "Track and analyze your sleep patterns and recovery",
     defaultMetrics: [],
@@ -103,6 +103,19 @@ export const DOMAIN_REGISTRY: DomainDefinition[] = [
     defaultMetrics: ["substances_alcohol"],
   },
 ];
+
+export const DOMAIN_CHART_COLORS: Record<string, string> = {
+  sleep:       "#818cf8",
+  fitness:     "#34d399",
+  chess:       "#fbbf24",
+  wellbeing:   "#fb7185",
+  caffeine:    "#fb923c",
+  recovery:    "#22d3ee",
+  hydration:   "#38bdf8",
+  substances:  "#c084fc",
+  supplements: "#a3e635",
+  screen_time: "#94a3b8",
+};
 
 export function getDomainById(id: Domain): DomainDefinition | undefined {
   return DOMAIN_REGISTRY.find((d) => d.id === id);

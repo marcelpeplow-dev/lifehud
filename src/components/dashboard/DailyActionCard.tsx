@@ -4,6 +4,24 @@ import { useState } from "react";
 import { Zap, RefreshCw } from "lucide-react";
 import type { DailyAction } from "@/types/index";
 
+const METRIC_RE = /(\d[\d.]*\s*(?:hours?|hrs?|minutes?|mins?|bpm|%|PM|AM|\/10|mg|steps?))/gi;
+const METRIC_RE_TEST = /^\d[\d.]*\s*(?:hours?|hrs?|minutes?|mins?|bpm|%|PM|AM|\/10|mg|steps?)$/i;
+
+function HighlightNumbers({ text }: { text: string }) {
+  const parts = text.split(METRIC_RE);
+  return (
+    <>
+      {parts.map((part, i) =>
+        METRIC_RE_TEST.test(part) ? (
+          <span key={i} className="font-bold text-blue-400">{part}</span>
+        ) : (
+          <span key={i}>{part}</span>
+        )
+      )}
+    </>
+  );
+}
+
 interface DailyActionCardProps {
   initial: DailyAction | null;
 }
@@ -56,7 +74,7 @@ export function DailyActionCard({ initial }: DailyActionCardProps) {
           <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">
             Today&apos;s focus
           </p>
-          <p className="text-sm text-zinc-100 leading-relaxed">{action.text}</p>
+          <p className="text-sm text-zinc-100 leading-relaxed"><HighlightNumbers text={action.text} /></p>
         </div>
         <button
           onClick={generate}

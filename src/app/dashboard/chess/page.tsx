@@ -30,7 +30,7 @@ export default async function ChessPage() {
     .order("played_at", { ascending: true });
 
   const games = (gamesData ?? []) as ChessGame[];
-  const recentGames = [...games].reverse().slice(0, 20);
+  const recentGames = [...games].reverse().slice(0, 5);
 
   // Results breakdown by time control
   const timeClasses = ["rapid", "blitz", "bullet", "daily"];
@@ -64,9 +64,7 @@ export default async function ChessPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <DomainPageTemplate domain="chess" userId={user.id} />
-
+    <DomainPageTemplate domain="chess" userId={user.id}>
       {/* Chess-specific analytics */}
       {games.length > 0 && (
         <>
@@ -92,14 +90,13 @@ export default async function ChessPage() {
                 Recent games
               </h2>
               <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-                <div className="hidden md:grid grid-cols-[1fr_80px_50px_70px_70px_60px_60px_1fr] gap-2 px-5 py-2.5 border-b border-zinc-800 text-xs font-medium text-zinc-500">
+                <div className="hidden md:grid grid-cols-[1fr_80px_60px_60px_56px_70px_1fr] gap-2 px-5 py-2.5 border-b border-zinc-800 text-xs font-medium text-zinc-500">
                   <span>Date</span>
                   <span>Format</span>
-                  <span>Src</span>
                   <span className="text-right">Rating</span>
-                  <span className="text-right">Opp.</span>
+                  <span className="text-right">Opp. Rating</span>
                   <span className="text-center">Result</span>
-                  <span className="text-right">Acc.</span>
+                  <span className="text-right">Accuracy</span>
                   <span>Opening</span>
                 </div>
                 <div className="divide-y divide-zinc-800">
@@ -107,10 +104,9 @@ export default async function ChessPage() {
                     const resultColor = game.result === "win" ? "text-emerald-400" : game.result === "loss" ? "text-red-400" : "text-zinc-400";
                     const resultLabel = game.result === "win" ? "W" : game.result === "loss" ? "L" : "D";
                     return (
-                      <div key={game.id} className="grid grid-cols-2 md:grid-cols-[1fr_80px_50px_70px_70px_60px_60px_1fr] gap-2 px-5 py-3 items-center text-sm">
+                      <div key={game.id} className="grid grid-cols-2 md:grid-cols-[1fr_80px_60px_60px_56px_70px_1fr] gap-2 px-5 py-3 items-center text-sm">
                         <span className="text-zinc-300 text-xs">{format(parseISO(game.played_at), "MMM d, h:mm a")}</span>
                         <span className="text-zinc-400 text-xs capitalize">{game.time_class}</span>
-                        <span className="text-zinc-500 text-xs">{game.source === "lichess" ? "Li" : "CC"}</span>
                         <span className="text-zinc-200 text-xs tabular-nums text-right">{game.player_rating}</span>
                         <span className="text-zinc-400 text-xs tabular-nums text-right">{game.opponent_rating}</span>
                         <span className={`text-xs font-semibold text-center ${resultColor}`}>{resultLabel}</span>
@@ -127,6 +123,6 @@ export default async function ChessPage() {
           )}
         </>
       )}
-    </div>
+    </DomainPageTemplate>
   );
 }

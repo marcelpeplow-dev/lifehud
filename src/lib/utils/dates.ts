@@ -22,11 +22,26 @@ export function formatShortDate(dateStr: string): string {
   return format(parseISO(dateStr), "MMM d");
 }
 
-/** Relative time string used in todays display: "Today", "Yesterday", "Mar 14" */
-export function formatRelativeDate(dateStr: string): string {
-  const today = format(new Date(), "yyyy-MM-dd");
-  const yesterday = format(subDays(new Date(), 1), "yyyy-MM-dd");
-  if (dateStr === today) return "Today";
+/**
+ * Get the current date string (YYYY-MM-DD) in the given IANA timezone.
+ * Falls back to the local date if the timezone is invalid.
+ */
+export function localDateStr(timezone?: string | null): string {
+  if (timezone) {
+    try {
+      // en-CA locale formats as YYYY-MM-DD
+      return new Intl.DateTimeFormat("en-CA", { timeZone: timezone }).format(new Date());
+    } catch { /* fall through */ }
+  }
+  return format(new Date(), "yyyy-MM-dd");
+}
+
+/** Relative time string used in today's display: "Today", "Yesterday", "Mar 14".
+ *  Pass the user's IANA timezone so comparisons are correct for their locale. */
+export function formatRelativeDate(dateStr: string, timezone?: string | null): string {
+  const todayStr = localDateStr(timezone);
+  const yesterday = format(subDays(parseISO(todayStr), 1), "yyyy-MM-dd");
+  if (dateStr === todayStr) return "Today";
   if (dateStr === yesterday) return "Yesterday";
   return format(parseISO(dateStr), "MMM d");
 }

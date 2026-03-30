@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PenLine, Coffee, Droplets, Monitor, Wine } from "lucide-react";
+import { Coffee, Droplets, Monitor, Wine } from "lucide-react";
 import type { BucketDomain } from "@/lib/metrics/buckets";
 
 interface DomainConfig {
@@ -57,28 +57,17 @@ export function BucketSelector({ domain, value, onChange }: Props) {
   }
 
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${cfg.bgColor}`}>
-            <Icon className={`w-3.5 h-3.5 ${cfg.textColor}`} />
-          </div>
-          <span className="text-sm font-semibold text-zinc-100">{domain.displayName}</span>
+      <div className="flex items-center gap-2">
+        <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${cfg.bgColor}`}>
+          <Icon className={`w-3.5 h-3.5 ${cfg.textColor}`} />
         </div>
-        <button
-          type="button"
-          onClick={() => setShowExact((prev) => !prev)}
-          className="flex items-center gap-1 text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
-          aria-expanded={showExact}
-        >
-          <PenLine className="w-3 h-3" />
-          Exact
-        </button>
+        <span className="text-sm font-semibold text-zinc-100">{domain.displayName}</span>
       </div>
 
       {/* Bucket buttons */}
-      <div role="radiogroup" aria-label={domain.displayName} className="flex gap-1.5">
+      <div role="radiogroup" aria-label={domain.displayName} className="flex gap-1.5 min-w-0">
         {domain.buckets.map((bucket, idx) => {
           const isSelected = selectedIdx === idx;
           return (
@@ -88,7 +77,7 @@ export function BucketSelector({ domain, value, onChange }: Props) {
               role="radio"
               aria-checked={isSelected}
               onClick={() => handleBucketClick(idx)}
-              className={`flex-1 rounded-lg border px-2 py-2.5 text-left min-h-[48px] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+              className={`flex-1 min-w-0 rounded-lg border px-2 py-2.5 text-left min-h-[48px] transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                 isSelected
                   ? "border-blue-500 bg-blue-500/[0.08] scale-[1.02]"
                   : "border-zinc-700/50 hover:border-zinc-600"
@@ -103,8 +92,16 @@ export function BucketSelector({ domain, value, onChange }: Props) {
         })}
       </div>
 
-      {/* Exact input */}
-      {showExact && (
+      {/* Exact amount option */}
+      {!showExact ? (
+        <button
+          type="button"
+          onClick={() => setShowExact(true)}
+          className="w-full text-left text-xs text-zinc-500 hover:text-zinc-300 transition-colors py-1"
+        >
+          Or enter exact amount…
+        </button>
+      ) : (
         <div className="flex items-center gap-2">
           <input
             type="number"
@@ -113,9 +110,17 @@ export function BucketSelector({ domain, value, onChange }: Props) {
             value={exactText}
             onChange={(e) => handleExactChange(e.target.value)}
             placeholder="Exact amount"
+            autoFocus
             className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none focus:border-blue-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
           <span className="text-sm text-zinc-500 shrink-0">{domain.exactUnit}</span>
+          <button
+            type="button"
+            onClick={() => { setShowExact(false); setExactText(""); }}
+            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors shrink-0"
+          >
+            Cancel
+          </button>
         </div>
       )}
     </div>

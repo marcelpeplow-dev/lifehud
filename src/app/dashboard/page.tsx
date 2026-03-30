@@ -1,15 +1,16 @@
-import { format, subDays, startOfWeek } from "date-fns";
+import { format, subDays, startOfWeek, parseISO } from "date-fns";
 import { Moon, Dumbbell, SmilePlus, Flame, Target } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { InsightCard } from "@/components/dashboard/InsightCard";
 import { DailyActionCard } from "@/components/dashboard/DailyActionCard";
+import { DashboardTour } from "@/components/dashboard/DashboardTour";
 import { SleepChart } from "@/components/charts/SleepChart";
 import { ActivityChart } from "@/components/charts/ActivityChart";
 import { StatCardsSection } from "@/components/dashboard/StatCardsSection";
 import { ConfigurableGraph } from "@/components/dashboard/ConfigurableGraph";
 import type { GraphConfig } from "@/components/dashboard/GraphBuilderModal";
-import { buildDateArray, formatRelativeDate } from "@/lib/utils/dates";
+import { buildDateArray, formatRelativeDate, localDateStr } from "@/lib/utils/dates";
 import { formatDuration, calcProgress } from "@/lib/utils/metrics";
 import type { Insight, Goal, CheckIn, DailyAction, SleepChartDataPoint, WorkoutChartDataPoint } from "@/types/index";
 import { redirect } from "next/navigation";
@@ -40,6 +41,7 @@ export default async function DashboardPage() {
     { data: statCardConfigs },
     { data: graphConfigs },
     { data: recentManualEntries },
+    { data: profileRow },
   ] = await Promise.all([
     supabase
       .from("sleep_records")
@@ -125,6 +127,11 @@ export default async function DashboardPage() {
       .gte("date", sevenDaysAgo)
       .order("date", { ascending: false })
       .limit(1),
+    supabase
+      .from("profiles")
+      .select("has_seen_tour, timezone")
+      .eq("id", user.id)
+      .single(),
   ]);
 
   // ── Metric computations ──────────────────────────────────────────────────
@@ -172,10 +179,13 @@ export default async function DashboardPage() {
     }
   }
 
-  // Check-in streak
+  // Check-in streak (use user's timezone so "today" is correct)
   const checkinDates = new Set((allCheckInDates ?? []).map((c: { date: string }) => c.date));
   let checkinStreak = 0;
-  let sd = new Date();
+  const profile = profileRow as { has_seen_tour: boolean | null; timezone: string | null } | null;
+  const userTimezone = profile?.timezone ?? null;
+  const userTodayStr = localDateStr(userTimezone);
+  let sd = parseISO(userTodayStr);
   while (checkinDates.has(format(sd, "yyyy-MM-dd"))) {
     checkinStreak++;
     sd = subDays(sd, 1);
@@ -264,6 +274,7 @@ export default async function DashboardPage() {
 
   const todayCheckIn = todayCheckInData as CheckIn | null;
   const dailyAction = dailyActionData as DailyAction | null;
+  const hasSeenTour = profile?.has_seen_tour ?? false;
   const insights = (rawInsights ?? []) as Insight[];
   const goals = (activeGoals ?? []) as Goal[];
   const sleepGoal = goals.find((g) => g.metric_name === "sleep_duration");
@@ -277,6 +288,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      <DashboardTour hasSeenTour={hasSeenTour} />
+
       {/* Header */}
       <div className="flex items-end justify-between gap-4">
         <div>
@@ -289,25 +302,25 @@ export default async function DashboardPage() {
         </div>
         {lastUpdatedDate && (
           <p className="text-xs text-zinc-600 shrink-0 pb-0.5">
-            Data: {formatRelativeDate(lastUpdatedDate)}
+            Data: {formatRelativeDate(lastUpdatedDate, userTimezone)}
           </p>
         )}
       </div>
 
       {/* Daily action */}
-      <section>
+      <section id="tour-daily-action">
         <DailyActionCard initial={dailyAction} />
       </section>
 
       {/* Customizable stat cards */}
-      <section>
+      <section id="tour-stat-cards">
         <StatCardsSection
           initialConfigs={finalStatCards}
         />
       </section>
 
       {/* Customizable graph widgets */}
-      <section>
+      <section id="tour-graphs">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[0, 1].map((pos) => {
             const row = finalGraphs.find((c) => c.position === pos);
@@ -417,7 +430,7 @@ export default async function DashboardPage() {
         // Starred first (already ordered by query), show up to 4
         const displayed = deduped.slice(0, 4);
         return (
-          <section>
+          <section id="tour-goals">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest">Goals</h2>
               <Link href="/dashboard/goals" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors flex items-center gap-1">
@@ -427,12 +440,12 @@ export default async function DashboardPage() {
             <div className="bg-zinc-900 border border-zinc-800 rounded-xl divide-y divide-zinc-800">
               {displayed.map((goal) => {
                 const pct = getGoalProgress(goal);
-                const progressColor = pct >= 100 ? "bg-emerald-500" : pct >= 70 ? "bg-blue-500" : pct >= 40 ? "bg-amber-500" : "bg-red-500";
+                const progressColor = pct >= 100 ? "bg-emerald-500" : pct >= 67 ? "bg-blue-500" : pct >= 34 ? "bg-amber-500" : "bg-red-500";
                 return (
                   <div key={goal.id} className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-zinc-50 truncate">{goal.title}</span>
-                      <span className={`text-xs font-semibold tabular-nums ml-2 shrink-0 ${pct >= 100 ? "text-emerald-400" : pct >= 70 ? "text-blue-400" : pct >= 40 ? "text-amber-400" : "text-red-400"}`}>
+                      <span className={`text-xs font-semibold tabular-nums ml-2 shrink-0 ${pct >= 100 ? "text-emerald-400" : pct >= 67 ? "text-blue-400" : pct >= 34 ? "text-amber-400" : "text-red-400"}`}>
                         {pct}%
                       </span>
                     </div>

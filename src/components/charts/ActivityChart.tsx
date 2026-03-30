@@ -53,7 +53,7 @@ export function ActivityChart({ data, showShortDate = false, height = 180 }: Act
 
   return (
     <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={chartData} barCategoryGap="30%">
+      <BarChart data={chartData} barCategoryGap="30%" margin={{ top: 5, right: 10, bottom: 20, left: 0 }}>
         <CartesianGrid vertical={false} stroke="#27272a" />
         <XAxis
           dataKey="date"

@@ -1,4 +1,4 @@
-import { format, subDays } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 import { Dumbbell, Zap, Wind, Trophy, Activity } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DomainPageTemplate } from "@/components/domain/DomainPageTemplate";
@@ -9,20 +9,20 @@ import { redirect } from "next/navigation";
 
 const TYPE_META: Record<
   NonNullable<Workout["workout_type"]>,
-  { label: string; icon: React.ComponentType<{ className?: string }>; color: string }
+  { label: string; icon: React.ComponentType<{ className?: string }> }
 > = {
-  strength:    { label: "Strength",    icon: Dumbbell, color: "text-orange-400 bg-orange-500/10" },
-  cardio:      { label: "Cardio",      icon: Zap,      color: "text-red-400 bg-red-500/10" },
-  flexibility: { label: "Flexibility", icon: Wind,     color: "text-green-400 bg-green-500/10" },
-  sport:       { label: "Sport",       icon: Trophy,   color: "text-amber-400 bg-amber-500/10" },
-  other:       { label: "Other",       icon: Activity, color: "text-zinc-400 bg-zinc-700" },
+  strength:    { label: "Strength",    icon: Dumbbell },
+  cardio:      { label: "Cardio",      icon: Zap      },
+  flexibility: { label: "Flexibility", icon: Wind     },
+  sport:       { label: "Sport",       icon: Trophy   },
+  other:       { label: "Other",       icon: Activity },
 };
 
 function TypeBadge({ type }: { type: Workout["workout_type"] }) {
   const meta = TYPE_META[type ?? "other"] ?? TYPE_META.other;
   const Icon = meta.icon;
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md ${meta.color}`}>
+    <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-1 rounded-md text-emerald-400 bg-zinc-700">
       <Icon className="w-3 h-3" />
       {meta.label}
     </span>
@@ -39,16 +39,14 @@ export default async function FitnessPage() {
 
   const { data: workouts } = await supabase
     .from("workouts")
-    .select("id,date,duration_minutes,workout_type,activity_name,calories_burned,avg_heart_rate,intensity_score")
+    .select("id,date,started_at,duration_minutes,workout_type,activity_name,calories_burned,avg_heart_rate,intensity_score")
     .eq("user_id", user.id)
     .gte("date", tenDaysAgo)
     .order("date", { ascending: false })
     .limit(10);
 
   return (
-    <div className="space-y-8">
-      <DomainPageTemplate domain="fitness" userId={user.id} />
-
+    <DomainPageTemplate domain="fitness" userId={user.id}>
       {/* Recent workouts */}
       {(workouts?.length ?? 0) > 0 && (
         <section>
@@ -68,7 +66,9 @@ export default async function FitnessPage() {
                       {(() => {
                         const rel = formatRelativeDate(w.date);
                         const short = formatShortDate(w.date);
-                        return rel === short ? rel : `${rel} · ${short}`;
+                        const dateStr = rel === short ? rel : `${rel} · ${short}`;
+                        const timeStr = w.started_at ? `, ${format(parseISO(w.started_at), "h:mm a")}` : "";
+                        return `${dateStr}${timeStr}`;
                       })()}
                     </p>
                   </div>
@@ -80,13 +80,13 @@ export default async function FitnessPage() {
                   </div>
                   {w.calories_burned != null && (
                     <div>
-                      <p className="text-sm font-semibold text-orange-400 tabular-nums">{w.calories_burned}</p>
+                      <p className="text-sm font-semibold text-emerald-400 tabular-nums">{w.calories_burned}</p>
                       <p className="text-xs text-zinc-500">kcal</p>
                     </div>
                   )}
                   {w.avg_heart_rate != null && (
                     <div>
-                      <p className="text-sm font-semibold text-red-400 tabular-nums">{w.avg_heart_rate}</p>
+                      <p className="text-sm font-semibold text-emerald-400 tabular-nums">{w.avg_heart_rate}</p>
                       <p className="text-xs text-zinc-500">avg bpm</p>
                     </div>
                   )}
@@ -96,6 +96,6 @@ export default async function FitnessPage() {
           </div>
         </section>
       )}
-    </div>
+    </DomainPageTemplate>
   );
 }

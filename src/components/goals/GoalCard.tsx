@@ -58,8 +58,8 @@ export function GoalCard({ goal, currentValue }: Props) {
   const pct = calcProgress(currentValue, goal.target_value);
   const progressColor =
     pct >= 100 ? "bg-emerald-500" :
-    pct >= 70  ? "bg-blue-500" :
-    pct >= 40  ? "bg-amber-500" :
+    pct >= 67  ? "bg-blue-500" :
+    pct >= 34  ? "bg-amber-500" :
                  "bg-red-500";
 
   const currentFormatted = metric
@@ -124,7 +124,7 @@ export function GoalCard({ goal, currentValue }: Props) {
       <div className="mb-3">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs text-zinc-400">{currentFormatted}</span>
-          <span className={`text-xs font-semibold tabular-nums ${pct >= 100 ? "text-emerald-400" : pct >= 70 ? "text-blue-400" : pct >= 40 ? "text-amber-400" : "text-red-400"}`}>
+          <span className={`text-xs font-semibold tabular-nums ${pct >= 100 ? "text-emerald-400" : pct >= 67 ? "text-blue-400" : pct >= 34 ? "text-amber-400" : "text-red-400"}`}>
             {pct}%
           </span>
         </div>

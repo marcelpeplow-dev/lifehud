@@ -58,7 +58,7 @@ registerDetector({
     return {
       detectorId: "SLEEP_DURATION_TREND",
       type: "SLEEP_DURATION_TREND",
-      description: `Sleep duration trending ${trend}: ${deltaMins > 0 ? "+" : ""}${deltaMins} min vs prior week (recent avg ${Math.round(recentAvg / 6) / 10}h).`,
+      description: `Sleep duration trending ${trend}: ${deltaMins > 0 ? "+" : ""}${deltaMins} min vs last week (recent avg ${Math.round(recentAvg / 6) / 10}h).`,
       domains: ["sleep"],
       data: { trend, delta_minutes: deltaMins, recent_avg: Math.round(recentAvg), prior_avg: Math.round(priorAvg) },
       significance: effectToSignificance(effectSize, { low: 0.03, mid: 0.07, high: 0.12 }),

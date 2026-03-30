@@ -43,9 +43,10 @@ const GRAPH_DEFAULTS: Partial<Record<Domain, [GraphConfig, GraphConfig]>> = {
 interface DomainPageTemplateProps {
   domain: Domain;
   userId: string;
+  children?: React.ReactNode;
 }
 
-export async function DomainPageTemplate({ domain, userId }: DomainPageTemplateProps) {
+export async function DomainPageTemplate({ domain, userId, children }: DomainPageTemplateProps) {
   const supabase = await createClient();
   const domainDef = getDomainById(domain);
   if (!domainDef) return null;
@@ -113,7 +114,10 @@ export async function DomainPageTemplate({ domain, userId }: DomainPageTemplateP
         </div>
       </section>
 
-      {/* Section 3: All metrics table */}
+      {/* Section 3: Recent activity (injected by each domain page) */}
+      {children}
+
+      {/* Section 4: All metrics table (power-user data, last) */}
       <section>
         <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest mb-3">
           All metrics

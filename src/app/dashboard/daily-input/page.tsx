@@ -1,7 +1,9 @@
 import { format } from "date-fns";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Settings } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { DailyInputForm } from "@/components/daily-input/DailyInputForm";
+import { localDateStr } from "@/lib/utils/dates";
 import { redirect } from "next/navigation";
 
 export default async function DailyInputPage() {
@@ -11,7 +13,13 @@ export default async function DailyInputPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const today = format(new Date(), "yyyy-MM-dd");
+  const { data: profileRow } = await supabase
+    .from("profiles")
+    .select("timezone")
+    .eq("id", user.id)
+    .single();
+  const timezone = (profileRow as { timezone: string | null } | null)?.timezone ?? null;
+  const today = localDateStr(timezone);
 
   const [{ data: configData }, { data: entriesData }, { data: checkinData }] =
     await Promise.all([
@@ -55,17 +63,26 @@ export default async function DailyInputPage() {
   const initialJournal = (checkinData?.notes as string | null) ?? "";
 
   return (
-    <div className="max-w-lg space-y-5">
-      <div className="flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
-          <ClipboardList className="w-5 h-5 text-blue-400" />
+    <div className="max-w-4xl mx-auto space-y-5">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+            <ClipboardList className="w-5 h-5 text-blue-400" />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-zinc-50 tracking-tight">Daily Input</h1>
+            <p className="text-xs text-zinc-500">
+              {format(new Date(today + "T12:00:00"), "EEEE, MMMM d")}
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-semibold text-zinc-50 tracking-tight">Daily Input</h1>
-          <p className="text-xs text-zinc-500">
-            {format(new Date(), "EEEE, MMMM d")}
-          </p>
-        </div>
+        <Link
+          href="/dashboard/settings"
+          className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 underline underline-offset-2 transition-colors"
+        >
+          <Settings className="w-3 h-3" />
+          Customize fields
+        </Link>
       </div>
 
       <DailyInputForm

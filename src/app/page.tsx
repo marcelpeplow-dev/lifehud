@@ -83,21 +83,21 @@ function Hero() {
 
         <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-10 leading-relaxed">
           Life HUD aggregates your sleep, fitness, chess, mood, and habits into one
-          intelligent dashboard — then uses AI to surface the patterns that actually matter.
+          intelligent dashboard, using AI to surface the patterns that actually matter.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mb-14">
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-zinc-950 font-semibold transition-colors text-base"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-zinc-50 font-medium transition-colors text-base"
           >
-            Start for free <ArrowRight className="w-4 h-4" />
+            Sign in
           </Link>
           <Link
             href="/login"
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl border border-zinc-700 hover:border-zinc-500 text-zinc-300 hover:text-zinc-50 font-medium transition-colors text-base"
+            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-blue-500 hover:bg-blue-400 text-zinc-950 font-semibold transition-colors text-base"
           >
-            Sign in to dashboard
+            Get started <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
@@ -159,7 +159,7 @@ function DomainsSection() {
             One dashboard.
           </h2>
           <p className="text-zinc-400 max-w-xl mx-auto">
-            Stop juggling five different apps. Everything about your life — from last night&apos;s sleep to this morning&apos;s workout to your chess rating — in one place.
+            Stop juggling five different apps. Everything about your life - from last night&apos;s sleep to this morning&apos;s workout to your chess rating - in one place.
           </p>
         </div>
 

@@ -7,8 +7,7 @@ import Link from "next/link";
 export function CheckInFAB() {
   const [done, setDone] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    // Check if there are any manual entries or a checkin for today
+  function checkCompletion() {
     Promise.all([
       fetch("/api/manual-entries?date=today").then((r) => r.json()).catch(() => ({ entries: [] })),
       fetch("/api/checkins").then((r) => r.json()).catch(() => ({ checkin: null })),
@@ -17,6 +16,12 @@ export function CheckInFAB() {
       const hasCheckin = checkin.checkin != null;
       setDone(hasManual || hasCheckin);
     });
+  }
+
+  useEffect(() => {
+    checkCompletion();
+    window.addEventListener("daily-input-saved", checkCompletion);
+    return () => window.removeEventListener("daily-input-saved", checkCompletion);
   }, []);
 
   // Don't render until we know the state
@@ -24,6 +29,7 @@ export function CheckInFAB() {
 
   return (
     <Link
+      id="tour-fab"
       href="/dashboard/daily-input"
       aria-label="Daily input"
       className={`fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all active:scale-95 ${

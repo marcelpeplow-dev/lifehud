@@ -46,6 +46,28 @@ export function calcProgress(current: number, target: number): number {
   return Math.min(Math.round((current / target) * 100), 100);
 }
 
+/**
+ * Format a delta value for display in stat cards.
+ * Applies smart rounding based on metric unit type:
+ *  - Integer units (steps, kcal, bpm, ms, elo, count, /10): no decimals, with locale separators
+ *  - Decimal units (hours, %, L, /game, min, mg): 1 decimal place
+ */
+export function formatDeltaDisplay(delta: number, unit: string, unitLabel: string): string {
+  const sign = delta >= 0 ? "+" : "-";
+  const abs = Math.abs(delta);
+
+  const intUnits = new Set(["steps", "kcal", "bpm", "ms", "elo", "count", "games"]);
+  const isIntUnit = intUnits.has(unit) || unit === "/10";
+
+  const numStr = isIntUnit
+    ? Math.round(abs).toLocaleString()
+    : abs.toFixed(1);
+
+  // For percentage metrics, suffix "pp" (percentage points) instead of "%" to avoid ambiguity
+  const displayLabel = unit === "%" ? " pp" : (unitLabel && unitLabel !== "—" ? ` ${unitLabel}` : "");
+  return `${sign}${numStr}${displayLabel}`;
+}
+
 /** Average an array of numbers, ignoring nulls */
 export function average(values: (number | null | undefined)[]): number | null {
   const valid = values.filter((v): v is number => v != null);

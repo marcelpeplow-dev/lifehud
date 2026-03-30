@@ -28,9 +28,7 @@ export default async function SleepPage() {
   const recentNights = (recentSleep ?? []).slice(0, 7);
 
   return (
-    <div className="space-y-8">
-      <DomainPageTemplate domain="sleep" userId={user.id} />
-
+    <DomainPageTemplate domain="sleep" userId={user.id}>
       {/* Recent nights */}
       {recentNights.length > 0 && (
         <section>
@@ -83,6 +81,6 @@ export default async function SleepPage() {
           </div>
         </section>
       )}
-    </div>
+    </DomainPageTemplate>
   );
 }

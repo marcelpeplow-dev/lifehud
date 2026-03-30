@@ -9,6 +9,7 @@ import {
 import { MetricPickerModal } from "./MetricPickerModal";
 import { getMetricById } from "@/lib/metrics/registry";
 import { getDomainById } from "@/lib/metrics/domains";
+import { formatDeltaDisplay } from "@/lib/utils/metrics";
 
 const DOMAIN_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   moon: Moon, dumbbell: Dumbbell, crown: Crown, heart: Heart,
@@ -119,7 +120,7 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const trendColor = trend === null ? "text-zinc-600"
     : trend === "flat" ? "text-zinc-500"
-    : trend === "up" ? "text-blue-400" : "text-red-400";
+    : trend === "up" ? "text-emerald-400" : "text-red-400";
 
   return (
     <>
@@ -132,7 +133,7 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
           <span className="text-xs font-medium text-zinc-400 leading-tight pr-2">
             {metric?.shortName ?? config.metricId}
           </span>
-          {Icon && <Icon className="w-4 h-4 shrink-0 text-blue-400" />}
+          {Icon && <Icon className={`w-4 h-4 shrink-0 ${iconColor}`} />}
         </div>
 
         {/* Value */}
@@ -144,12 +145,12 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
         {trend !== null ? (
           <span className={`inline-flex items-center gap-1 text-xs font-medium ${trendColor}`}>
             <TrendIcon className="w-3 h-3 shrink-0" />
-            {delta !== null
-              ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} ${metric?.unitLabel ?? ""} vs prior week`.trim()
-              : "vs prior week"}
+            {delta !== null && metric
+              ? `${formatDeltaDisplay(delta, metric.unit, metric.unitLabel)} vs last week`
+              : "vs last week"}
           </span>
         ) : (
-          <span className="text-xs text-zinc-500">— vs prior week</span>
+          <span className="text-xs text-zinc-500">vs last week</span>
         )}
 
         {/* Actions overlay */}
