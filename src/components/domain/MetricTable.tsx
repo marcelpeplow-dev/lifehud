@@ -1,8 +1,10 @@
 "use client";
 
 import { useDomainMetrics } from "@/hooks/useDomainMetrics";
+import { getMetricById } from "@/lib/metrics/registry";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import type { Domain } from "@/lib/analysis/domains";
+import type { DomainMetricData } from "@/hooks/useDomainMetrics";
 
 interface HealthDotProps {
   value: number | null;
@@ -49,6 +51,12 @@ export function MetricTable({ domain }: MetricTableProps) {
   const hasAnyData = (m: (typeof metrics)[number]) =>
     m.today != null || m.avg7d != null || m.avg30d != null || m.avg90d != null;
 
+  function emptyCell(m: DomainMetricData): string {
+    const inputType = getMetricById(m.metricId)?.inputType;
+    if (inputType === "time") return "—:—";
+    return m.unitLabel ? `— ${m.unitLabel}` : "—";
+  }
+
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
       {/* Table header */}
@@ -71,34 +79,40 @@ export function MetricTable({ domain }: MetricTableProps) {
         return (
           <div
             key={m.metricId}
-            className={`grid grid-cols-[1fr_auto] md:grid-cols-[2fr_80px_80px_80px_80px_20px] gap-2 items-center px-5 py-3 ${i % 2 === 0 ? "" : "bg-zinc-950/40"} ${i > 0 ? "border-t border-zinc-800/50" : ""} ${noData ? "opacity-50" : ""}`}
+            className={`grid grid-cols-[1fr_auto] md:grid-cols-[2fr_80px_80px_80px_80px_20px] gap-2 items-center px-5 py-3 ${i % 2 === 0 ? "" : "bg-zinc-950/40"} ${i > 0 ? "border-t border-zinc-800/50" : ""}`}
           >
             {/* Name + description */}
             <div>
-              <p className="text-sm font-medium text-zinc-200">{m.name}</p>
+              <p className={`text-sm font-medium ${noData ? "text-zinc-500" : "text-zinc-200"}`}>{m.name}</p>
               <p className="text-xs text-zinc-500 mt-0.5 hidden md:block truncate max-w-xs">{m.description}</p>
             </div>
 
             {/* Mobile: show today value + trend */}
             <div className="flex items-center gap-2 md:hidden text-right">
-              <span className={`text-sm font-semibold tabular-nums ${noData ? "text-zinc-600" : "text-zinc-200"}`}>
-                {m.formatted.today ?? m.formatted.avg7d ?? "—"}
-              </span>
-              {m.trend && <TrendIcon className={`w-3 h-3 ${trendColor}`} />}
+              {noData ? (
+                <span className="text-xs text-zinc-500 italic">No data</span>
+              ) : (
+                <>
+                  <span className="text-sm font-semibold tabular-nums text-zinc-200">
+                    {m.formatted.today ?? m.formatted.avg7d ?? emptyCell(m)}
+                  </span>
+                  {m.trend && <TrendIcon className={`w-3 h-3 ${trendColor}`} />}
+                </>
+              )}
             </div>
 
             {/* Desktop: individual columns */}
-            <span className="hidden md:block text-sm tabular-nums text-zinc-300 text-right">
-              {m.formatted.today ?? "—"}
+            <span className={`hidden md:block text-sm tabular-nums text-right ${m.formatted.today == null ? "text-zinc-600 italic text-xs" : "text-zinc-300"}`}>
+              {m.formatted.today ?? (noData ? "No data" : emptyCell(m))}
             </span>
-            <span className="hidden md:block text-sm tabular-nums text-zinc-400 text-right">
-              {m.formatted.avg7d ?? "—"}
+            <span className={`hidden md:block text-sm tabular-nums text-right ${m.formatted.avg7d == null ? "text-zinc-600" : "text-zinc-400"}`}>
+              {m.formatted.avg7d ?? emptyCell(m)}
             </span>
-            <span className="hidden md:block text-sm tabular-nums text-zinc-400 text-right">
-              {m.formatted.avg30d ?? "—"}
+            <span className={`hidden md:block text-sm tabular-nums text-right ${m.formatted.avg30d == null ? "text-zinc-600" : "text-zinc-400"}`}>
+              {m.formatted.avg30d ?? emptyCell(m)}
             </span>
-            <span className="hidden md:block text-sm tabular-nums text-zinc-500 text-right">
-              {m.formatted.avg90d ?? "—"}
+            <span className={`hidden md:block text-sm tabular-nums text-right ${m.formatted.avg90d == null ? "text-zinc-600" : "text-zinc-500"}`}>
+              {m.formatted.avg90d ?? emptyCell(m)}
             </span>
             <div className="hidden md:flex items-center justify-end gap-1">
               <HealthDot value={m.avg30d} healthyRange={m.healthyRange} />

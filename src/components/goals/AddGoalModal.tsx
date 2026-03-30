@@ -27,8 +27,9 @@ const DOMAIN_BG: Record<string, string> = {
   "red-400": "bg-red-500/10",
 };
 
+// Exclude toggle (binary yes/no) and text (free-form) — all numeric, slider, stepper, and time metrics are valid goal targets
 const GOAL_METRICS_FILTER = (m: MetricDefinition) =>
-  !m.inputType || !["toggle", "text", "time"].includes(m.inputType);
+  m.inputType !== "toggle" && m.inputType !== "text";
 
 function suggestTitle(metric: MetricDefinition, target: number): string {
   const t = metric.format(target);
@@ -251,6 +252,9 @@ export function AddGoalModal({ onClose }: { onClose: () => void }) {
                   className={inputCls}
                   autoFocus
                 />
+                {selectedMetric.inputType === "time" && (
+                  <p className="text-xs text-zinc-500 mt-1.5">Enter as decimal hours — e.g. 22.5 for 10:30 PM, 7.0 for 7:00 AM</p>
+                )}
               </div>
 
               <div>
