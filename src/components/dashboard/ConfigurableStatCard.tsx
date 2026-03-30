@@ -41,6 +41,7 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
   const [config, setConfig] = useState<StatCardConfig | null>(initialConfig);
   const [value, setValue] = useState<string | null>(null);
   const [trend, setTrend] = useState<"up" | "down" | "flat" | null>(null);
+  const [delta, setDelta] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -50,9 +51,10 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
     try {
       const res = await fetch(`/api/metric-value?metricId=${metricId}&period=7d`);
       if (!res.ok) return;
-      const data = await res.json() as { formatted: string | null; trend: "up" | "down" | "flat" | null };
+      const data = await res.json() as { formatted: string | null; trend: "up" | "down" | "flat" | null; delta: number | null };
       setValue(data.formatted);
       setTrend(data.trend);
+      setDelta(data.delta ?? null);
     } catch { /* silent */ } finally {
       setLoading(false);
     }
@@ -138,17 +140,16 @@ export function ConfigurableStatCard({ position, domain = null, initialConfig = 
           {loading ? <span className="text-zinc-600 text-lg">—</span> : (value ?? "—")}
         </div>
 
-        {/* Trend */}
-        {trend !== null && (
+        {/* Trend + delta */}
+        {trend !== null ? (
           <span className={`inline-flex items-center gap-1 text-xs font-medium ${trendColor}`}>
             <TrendIcon className="w-3 h-3 shrink-0" />
-            vs prior week
+            {delta !== null
+              ? `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} ${metric?.unitLabel ?? ""} vs prior week`.trim()
+              : "vs prior week"}
           </span>
-        )}
-
-        {/* Unit label */}
-        {!trend && metric && (
-          <span className="text-xs text-zinc-600">{metric.unitLabel}</span>
+        ) : (
+          <span className="text-xs text-zinc-500">— vs prior week</span>
         )}
 
         {/* Actions overlay */}

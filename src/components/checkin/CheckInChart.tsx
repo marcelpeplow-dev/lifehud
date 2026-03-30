@@ -99,7 +99,7 @@ export function CheckInChart({ checkins, showShortDate = false }: {
             tickLine={false}
             axisLine={false}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip />} isAnimationActive={false} offset={15} />
           <ReferenceLine y={5} stroke="#3f3f46" strokeDasharray="3 3" />
           {LINES.map(({ key, color }) => (
             <Line

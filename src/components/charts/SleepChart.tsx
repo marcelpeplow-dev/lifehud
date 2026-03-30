@@ -70,7 +70,7 @@ export function SleepChart({ data, goalMinutes = 420 }: SleepChartProps) {
           domain={[0, "auto"]}
           width={28}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#27272a" }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#27272a" }} isAnimationActive={false} offset={15} />
         <ReferenceLine
           y={goalMinutes}
           stroke="#34d399"

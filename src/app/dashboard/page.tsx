@@ -187,6 +187,81 @@ export default async function DashboardPage() {
   const lastManualDate = recentManualEntries?.[0]?.date ?? null;
   const lastUpdatedDate = [lastSleepDate, lastMetricDate, lastManualDate].filter(Boolean).sort().at(-1) ?? null;
 
+  // ── Smart defaults for new users ────────────────────────────────────────────
+  type StatCardRow = { position: number; config: { metricId: string; domain: string } };
+  type GraphRow = { position: number; config: GraphConfig };
+
+  let finalStatCards: StatCardRow[] = (statCardConfigs ?? []) as StatCardRow[];
+  let finalGraphs: GraphRow[] = (graphConfigs ?? []) as GraphRow[];
+
+  if (finalStatCards.length === 0 && finalGraphs.length === 0) {
+    const [{ data: integrations }, { data: profileData }] = await Promise.all([
+      supabase.from("user_integrations").select("provider").eq("user_id", user.id),
+      supabase.from("profiles").select("chess_username").eq("id", user.id).single(),
+    ]);
+
+    const hasFitbit = (integrations ?? []).some((i: { provider: string }) => i.provider === "fitbit");
+    const hasChess = !!(profileData as { chess_username: string | null } | null)?.chess_username;
+
+    let seedStatCards: StatCardRow[] = [];
+    let seedGraphs: GraphRow[] = [];
+
+    if (hasFitbit && hasChess) {
+      seedStatCards = [
+        { position: 0, config: { metricId: "sleep_total_duration", domain: "sleep" } },
+        { position: 1, config: { metricId: "fitness_active_minutes", domain: "fitness" } },
+        { position: 2, config: { metricId: "chess_rating", domain: "chess" } },
+        { position: 3, config: { metricId: "chess_win_rate", domain: "chess" } },
+      ];
+      seedGraphs = [
+        { position: 0, config: { metrics: [{ metricId: "sleep_total_duration", domain: "sleep" }], chartType: "bar", days: 7 } },
+        { position: 1, config: { metrics: [{ metricId: "fitness_active_minutes", domain: "fitness" }], chartType: "bar", days: 7 } },
+      ];
+    } else if (hasFitbit) {
+      seedStatCards = [
+        { position: 0, config: { metricId: "sleep_total_duration", domain: "sleep" } },
+        { position: 1, config: { metricId: "fitness_active_minutes", domain: "fitness" } },
+        { position: 2, config: { metricId: "fitness_resting_hr", domain: "fitness" } },
+        { position: 3, config: { metricId: "sleep_efficiency", domain: "sleep" } },
+      ];
+      seedGraphs = [
+        { position: 0, config: { metrics: [{ metricId: "sleep_total_duration", domain: "sleep" }], chartType: "bar", days: 7 } },
+        { position: 1, config: { metrics: [{ metricId: "fitness_active_minutes", domain: "fitness" }], chartType: "bar", days: 7 } },
+      ];
+    } else if (hasChess) {
+      seedStatCards = [
+        { position: 0, config: { metricId: "chess_win_rate", domain: "chess" } },
+        { position: 1, config: { metricId: "chess_rating", domain: "chess" } },
+        { position: 2, config: { metricId: "chess_accuracy", domain: "chess" } },
+        { position: 3, config: { metricId: "chess_games_per_week", domain: "chess" } },
+      ];
+      seedGraphs = [
+        { position: 0, config: { metrics: [{ metricId: "chess_rating", domain: "chess" }], chartType: "line", days: 30 } },
+        { position: 1, config: { metrics: [{ metricId: "chess_win_rate", domain: "chess" }], chartType: "bar", days: 7 } },
+      ];
+    } else {
+      seedStatCards = [
+        { position: 0, config: { metricId: "wellbeing_mood", domain: "wellbeing" } },
+        { position: 1, config: { metricId: "wellbeing_energy", domain: "wellbeing" } },
+        { position: 2, config: { metricId: "wellbeing_stress", domain: "wellbeing" } },
+        { position: 3, config: { metricId: "caffeine_total_daily", domain: "caffeine" } },
+      ];
+      seedGraphs = [
+        { position: 0, config: { metrics: [{ metricId: "wellbeing_mood", domain: "wellbeing" }], chartType: "line", days: 7 } },
+        { position: 1, config: { metrics: [{ metricId: "wellbeing_energy", domain: "wellbeing" }], chartType: "line", days: 7 } },
+      ];
+    }
+
+    const inserts = [
+      ...seedStatCards.map((c) => ({ user_id: user.id, config_type: "stat_card", position: c.position, domain: null, config: c.config as Record<string, unknown> })),
+      ...seedGraphs.map((c) => ({ user_id: user.id, config_type: "graph", position: c.position, domain: null, config: c.config as unknown as Record<string, unknown> })),
+    ];
+    await supabase.from("user_dashboard_config").insert(inserts);
+
+    finalStatCards = seedStatCards;
+    finalGraphs = seedGraphs;
+  }
+
   const todayCheckIn = todayCheckInData as CheckIn | null;
   const dailyAction = dailyActionData as DailyAction | null;
   const insights = (rawInsights ?? []) as Insight[];
@@ -227,7 +302,7 @@ export default async function DashboardPage() {
       {/* Customizable stat cards */}
       <section>
         <StatCardsSection
-          initialConfigs={(statCardConfigs ?? []) as { position: number; config: { metricId: string; domain: string } }[]}
+          initialConfigs={finalStatCards}
         />
       </section>
 
@@ -235,7 +310,7 @@ export default async function DashboardPage() {
       <section>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[0, 1].map((pos) => {
-            const row = (graphConfigs ?? []).find((c: { position: number; config: GraphConfig }) => c.position === pos);
+            const row = finalGraphs.find((c) => c.position === pos);
             return (
               <ConfigurableGraph
                 key={pos}

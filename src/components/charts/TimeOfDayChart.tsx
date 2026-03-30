@@ -63,7 +63,7 @@ export function TimeOfDayChart({ data }: TimeOfDayChartProps) {
           domain={[0, 100]}
           width={36}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#27272a" }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#27272a" }} isAnimationActive={false} offset={15} />
         <Bar dataKey="winRate" radius={[4, 4, 0, 0]}>
           {data.map((entry, i) => (
             <Cell

@@ -62,6 +62,7 @@ export function GraphChart({ metricIds, domainIds, seriesData, chartType, days, 
   const units = metricIds.map((id) => getMetricById(id)?.unitLabel ?? "");
   const names = metricIds.map((id) => getMetricById(id)?.shortName ?? id);
   const dualAxis = metricIds.length === 2 && units[0] !== units[1];
+  const isBinary = metricIds.every((id) => getMetricById(id)?.inputType === "toggle");
 
   const commonProps = {
     data: chartData,
@@ -78,7 +79,9 @@ export function GraphChart({ metricIds, domainIds, seriesData, chartType, days, 
     />
   );
 
-  const yAxes = dualAxis
+  const yAxes = isBinary
+    ? [<YAxis key="left" yAxisId={0} domain={[0, 1]} ticks={[0, 1]} tickFormatter={(v: number) => (v === 0 ? "No" : "Yes")} tick={{ fill: "#a1a1aa", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />]
+    : dualAxis
     ? [
         <YAxis key="left" yAxisId={0} orientation="left" domain={["auto", "auto"]} tick={{ fill: "#a1a1aa", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />,
         <YAxis key="right" yAxisId={1} orientation="right" domain={["auto", "auto"]} tick={{ fill: "#a1a1aa", fontSize: 11 }} axisLine={false} tickLine={false} width={36} />,
@@ -87,6 +90,8 @@ export function GraphChart({ metricIds, domainIds, seriesData, chartType, days, 
 
   const tooltipEl = (
     <Tooltip
+      isAnimationActive={false}
+      offset={15}
       contentStyle={{ background: "#27272a", border: "1px solid #3f3f46", borderRadius: 8, color: "#fafafa", fontSize: 12 }}
       labelStyle={{ color: "#a1a1aa", marginBottom: 4 }}
       formatter={(value, name) => {
@@ -136,7 +141,7 @@ export function GraphChart({ metricIds, domainIds, seriesData, chartType, days, 
       <LineChart {...commonProps}>
         {grid}{xAxis}{yAxes}{tooltipEl}{legendEl}
         {metricIds.map((id, i) => (
-          <Line key={id} yAxisId={dualAxis ? i : 0} type="monotone" dataKey={id} stroke={colors[i]} strokeWidth={2} dot={false} connectNulls />
+          <Line key={id} yAxisId={dualAxis ? i : 0} type="monotone" dataKey={id} stroke={colors[i]} strokeWidth={2} dot={{ r: 3, fill: colors[i], strokeWidth: 0 }} activeDot={{ r: 5, strokeWidth: 2, stroke: colors[i] }} connectNulls />
         ))}
       </LineChart>
     </ResponsiveContainer>

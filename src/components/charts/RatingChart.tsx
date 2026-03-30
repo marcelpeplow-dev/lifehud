@@ -107,7 +107,7 @@ export function RatingChart({ data }: RatingChartProps) {
             width={40}
             domain={["auto", "auto"]}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<CustomTooltip />} isAnimationActive={false} offset={15} />
           {TIME_CLASSES.map((tc) =>
             visible[tc.key] && hasData[tc.key] ? (
               <Line

@@ -86,7 +86,7 @@ export function SleepStagesChart({ data, showShortDate = false }: SleepStagesCha
           tickLine={false}
           width={28}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#27272a" }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#27272a" }} isAnimationActive={false} offset={15} />
         <Legend
           wrapperStyle={{ fontSize: 11, color: "#71717a", paddingTop: 8 }}
           iconType="square"

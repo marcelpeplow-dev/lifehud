@@ -69,7 +69,7 @@ export function ActivityChart({ data, showShortDate = false, height = 180 }: Act
           tickLine={false}
           width={32}
         />
-        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#27272a" }} />
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: "#27272a" }} isAnimationActive={false} offset={15} />
         <Bar dataKey="minutes" radius={[4, 4, 0, 0]}>
           {chartData.map((entry, i) => (
             <Cell

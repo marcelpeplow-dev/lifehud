@@ -5,6 +5,7 @@ import { getMetricById } from "./registry";
 export interface MetricResult {
   value: number | null;
   trend: "up" | "down" | "flat" | null;
+  delta: number | null;
 }
 
 function calcTrend(current: number | null, prior: number | null): "up" | "down" | "flat" | null {
@@ -13,6 +14,14 @@ function calcTrend(current: number | null, prior: number | null): "up" | "down" 
   if (pct > 0.03) return "up";
   if (pct < -0.03) return "down";
   return "flat";
+}
+
+function makeResult(value: number | null, priorValue: number | null): MetricResult {
+  return {
+    value,
+    trend: calcTrend(value, priorValue),
+    delta: value !== null && priorValue !== null ? value - priorValue : null,
+  };
 }
 
 function avg(values: (number | null | undefined)[]): number | null {
@@ -74,7 +83,7 @@ async function fetchSleepMetric(
 
   const value = extract(curr as SleepRow[] | null);
   const priorValue = extract(prior as SleepRow[] | null);
-  return { value, trend: calcTrend(value, priorValue) };
+  return makeResult(value, priorValue);
 }
 
 async function fetchFitnessMetric(
@@ -112,7 +121,7 @@ async function fetchFitnessMetric(
 
   const value = extract(currWorkouts as WRow[] | null, currMetrics as MRow[] | null);
   const priorValue = extract(priorWorkouts as WRow[] | null, priorMetrics as MRow[] | null);
-  return { value, trend: calcTrend(value, priorValue) };
+  return makeResult(value, priorValue);
 }
 
 async function fetchChessMetric(
@@ -141,7 +150,7 @@ async function fetchChessMetric(
 
   const value = extract(curr as GRow[] | null);
   const priorValue = extract(prior as GRow[] | null);
-  return { value, trend: calcTrend(value, priorValue) };
+  return makeResult(value, priorValue);
 }
 
 async function fetchWellbeingMetric(
@@ -151,7 +160,7 @@ async function fetchWellbeingMetric(
   // Try manual_entries first, fall back to daily_checkins for mood/energy/stress
   const checkinField = metricId === "wellbeing_mood" ? "mood" : metricId === "wellbeing_energy" ? "energy" : metricId === "wellbeing_stress" ? "stress" : null;
 
-  if (metricId === "wellbeing_journal") return { value: null, trend: null };
+  if (metricId === "wellbeing_journal") return { value: null, trend: null, delta: null };
 
   const [{ data: currManual }, { data: priorManual }, { data: currCheckin }, { data: priorCheckin }] = await Promise.all([
     supabase.from("manual_entries").select("value").eq("user_id", userId).eq("metric_id", metricId).gte("date", currentStart),
@@ -170,7 +179,7 @@ async function fetchWellbeingMetric(
 
   const value = avg(combined);
   const priorValue = avg(priorCombined);
-  return { value, trend: calcTrend(value, priorValue) };
+  return makeResult(value, priorValue);
 }
 
 async function fetchManualMetric(
@@ -183,7 +192,7 @@ async function fetchManualMetric(
   ]);
   const value = avg((curr ?? []).map((r: { value: number }) => r.value));
   const priorValue = avg((prior ?? []).map((r: { value: number }) => r.value));
-  return { value, trend: calcTrend(value, priorValue) };
+  return makeResult(value, priorValue);
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────────
@@ -195,7 +204,7 @@ export async function fetchMetricValue(
   period: "today" | "7d" | "30d" | "90d",
 ): Promise<MetricResult> {
   const metric = getMetricById(metricId);
-  if (!metric) return { value: null, trend: null };
+  if (!metric) return { value: null, trend: null, delta: null };
 
   const { currentStart, priorStart, priorEnd } = getPeriodDates(period);
 
