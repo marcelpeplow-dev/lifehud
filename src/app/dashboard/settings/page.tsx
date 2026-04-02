@@ -5,6 +5,8 @@ import { DeviceCard } from "@/components/settings/DeviceCard";
 import { ConnectDeviceButton } from "@/components/settings/ConnectDeviceButton";
 import { ConnectFitbitButton } from "@/components/settings/ConnectFitbitButton";
 import { FitbitCard } from "@/components/settings/FitbitCard";
+import { WhoopCard } from "@/components/settings/WhoopCard";
+import { ConnectWhoopButton } from "@/components/settings/ConnectWhoopButton";
 import { ChessCard } from "@/components/settings/ChessCard";
 import { ConnectChessButton } from "@/components/settings/ConnectChessButton";
 import { LichessCard } from "@/components/settings/LichessCard";
@@ -47,18 +49,31 @@ interface FitbitIntegration {
   created_at: string;
 }
 
+interface WhoopIntegration {
+  id: string;
+  provider_user_id: string | null;
+  last_sync_at: string | null;
+  created_at: string;
+}
+
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ connected?: string; fitbit_error?: string }>;
+  searchParams: Promise<{ connected?: string; fitbit_error?: string; whoop_error?: string }>;
 }) {
-  const { connected, fitbit_error: fitbitError } = await searchParams;
+  const { connected, fitbit_error: fitbitError, whoop_error: whoopError } = await searchParams;
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: profileData }, { data: devicesData }, { data: fitbitData }, { data: manualConfigData }] = await Promise.all([
+  const [
+    { data: profileData },
+    { data: devicesData },
+    { data: fitbitData },
+    { data: whoopData },
+    { data: manualConfigData },
+  ] = await Promise.all([
     supabase.from("profiles").select("*").eq("id", user.id).single(),
     supabase
       .from("device_connections")
@@ -72,12 +87,19 @@ export default async function SettingsPage({
       .eq("user_id", user.id)
       .eq("provider", "fitbit")
       .maybeSingle(),
+    supabase
+      .from("user_integrations")
+      .select("id, provider_user_id, last_sync_at, created_at")
+      .eq("user_id", user.id)
+      .eq("provider", "whoop")
+      .maybeSingle(),
     supabase.from("user_manual_config").select("*").eq("user_id", user.id).order("display_order"),
   ]);
 
   const profile = profileData as Profile | null;
   const devices = (devicesData ?? []) as DeviceConnection[];
   const fitbitIntegration = fitbitData as FitbitIntegration | null;
+  const whoopIntegration = whoopData as WhoopIntegration | null;
 
   let chessStats: { rapid: number | null; blitz: number | null; bullet: number | null } | null = null;
   if (profile?.chess_username) {
@@ -138,6 +160,18 @@ export default async function SettingsPage({
           Fitbit connection failed: {fitbitError}
         </div>
       )}
+      {connected === "whoop" && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-blue-500/10 border border-blue-500/20 rounded-xl text-sm text-blue-400">
+          <span className="w-2 h-2 rounded-full bg-blue-400 shrink-0" />
+          Whoop connected! Your data is syncing now.
+        </div>
+      )}
+      {whoopError && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl text-sm text-red-400">
+          <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
+          Whoop connection failed: {whoopError}
+        </div>
+      )}
 
       {/* Profile */}
       <Section title="Profile" description="Your personal details used for personalized coaching.">
@@ -166,6 +200,20 @@ export default async function SettingsPage({
               Link your Fitbit to automatically import sleep, workouts, steps, heart rate, and HRV data.
             </p>
             <ConnectFitbitButton />
+          </div>
+        )}
+      </Section>
+
+      {/* Whoop */}
+      <Section title="Whoop" description="Connect your Whoop account to sync sleep, recovery, workouts, and strain data.">
+        {whoopIntegration ? (
+          <WhoopCard integration={whoopIntegration} />
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-zinc-500">
+              Link your Whoop to automatically import sleep, recovery scores, HRV, workouts, and daily strain.
+            </p>
+            <ConnectWhoopButton />
           </div>
         )}
       </Section>
