@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { parseGarminExport } from "@/lib/garmin/parser";
 import { parseFitbitZip } from "@/lib/fitbit/parser";
-import { parseAppleHealth } from "@/lib/apple-health/parser";
 import type { DeviceImportData } from "@/types/index";
 
 // ─── DEVICE CONFIG ─────────────────────────────────────────────────────────────
@@ -55,12 +54,12 @@ const DEVICE_CONFIG: Record<DeviceType, DeviceConfig> = {
   },
   apple_health: {
     label: "Apple Health",
-    source: "apple_health_csv",
-    fileAccept: ".csv",
-    multiple: true,
-    dropLabel: "Drop your Apple Health CSV files here",
-    dropHint: "select all files at once",
-    instructions: "QS Access app → select Sleep Analysis, Steps, Heart Rate, Workouts → Share → CSV",
+    source: "apple_health",
+    fileAccept: ".zip",
+    multiple: false,
+    dropLabel: "Drop your Apple Health export zip here",
+    dropHint: "or click to browse",
+    instructions: "Open the Health app on your iPhone → tap your profile icon → Export All Health Data → upload the zip file here",
   },
 };
 
@@ -201,20 +200,43 @@ export function ImportFlow() {
       setStep("parsing");
       setError(null);
       try {
+        if (device === "apple_health") {
+          // Apple Health exports go directly to the server (XML files can be 100MB+)
+          if (!files[0].name.toLowerCase().endsWith(".zip"))
+            throw new Error("Please upload your Apple Health export zip file.");
+          setStep("importing");
+          const form = new FormData();
+          form.append("file", files[0]);
+          const res = await fetch("/api/import/apple-health", {
+            method: "POST",
+            body: form,
+          });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.error ?? "Import failed");
+          const { inserted } = body as {
+            inserted: { sleep: number; workouts: number; metrics: number };
+          };
+          // Synthesize a DeviceImportData-shaped summary for the done screen
+          setData({
+            sleep: Array(inserted.sleep).fill({}),
+            workouts: Array(inserted.workouts).fill({}),
+            metrics: Array(inserted.metrics).fill({}),
+          } as unknown as DeviceImportData);
+          setStep("done");
+          setTimeout(() => router.push("/dashboard"), 1800);
+          return;
+        }
+
         let parsed: DeviceImportData;
         if (device === "garmin") {
           const ext = files[0].name.toLowerCase();
           if (!ext.endsWith(".zip") && !ext.endsWith(".csv"))
             throw new Error("Please upload a .zip (full data export) or .csv (activities export) from Garmin.");
           parsed = await parseGarminExport(files[0]);
-        } else if (device === "fitbit") {
+        } else {
           if (!files[0].name.toLowerCase().endsWith(".zip"))
             throw new Error("Please upload a .zip file (Fitbit export).");
           parsed = await parseFitbitZip(files[0]);
-        } else {
-          const nonCsv = files.find((f) => !f.name.toLowerCase().endsWith(".csv"));
-          if (nonCsv) throw new Error("Please select CSV files only.");
-          parsed = await parseAppleHealth(files);
         }
         setData(parsed);
         setStep("preview");
@@ -223,7 +245,7 @@ export function ImportFlow() {
         setStep("error");
       }
     },
-    [device]
+    [device, router]
   );
 
   const handleDrop = useCallback(
